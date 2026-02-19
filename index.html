@@ -523,12 +523,12 @@ function recalculateTotals() {
 
   document.querySelectorAll('.consumable-row').forEach(row => {
     const qty = Number(row.querySelector('.qty-input').value || 0);
-    totals.saturatedFat += Number(row.dataset.saturatedfat) * qty;
-    totals.addedSugar += Number(row.dataset.addedsugar) * qty;
+    totals.saturatedFat += Number(row.dataset.saturatedFat) * qty;
+    totals.addedSugar += Number(row.dataset.addedSugar) * qty;
     totals.sodium += Number(row.dataset.sodium) * qty;
     totals.protein += Number(row.dataset.protein) * qty;
-    totals.solubleFiber += Number(row.dataset.solublefiber) * qty;
-    totals.insolubleFiber += Number(row.dataset.insolublefiber) * qty;
+    totals.solubleFiber += Number(row.dataset.solubleFiber) * qty;
+    totals.insolubleFiber += Number(row.dataset.insolubleFiber) * qty;
     totals.potassium += Number(row.dataset.potassium) * qty;
     totals.magnesium += Number(row.dataset.magnesium) * qty;
   });
