@@ -72,6 +72,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
       <input id="jsonImportInput" type="file" accept="application/json" style="display:none" onchange="importJson(event)">
       <button class="tool-btn warn" onclick="wipeAllData()">清除全部資料</button>
     </div>
+    <div id="lastBackupStatus" class="management-note">上次備份：尚無紀錄</div>
     <div class="management-note">Google 備份會寫入 Drive 的 appDataFolder（僅本 App 可見）。</div>
   </div>
 </div>
@@ -127,6 +128,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 const STORAGE_KEY = 'dietTrackerDailyDataV1';
 const STAY_SIGNED_IN_KEY = 'dietTrackerStaySignedIn';
 const GOOGLE_TOKEN_CACHE_KEY = 'dietTrackerGoogleTokenCache';
+const LAST_BACKUP_AT_KEY = 'dietTrackerLastBackupAt';
+const AUTO_BACKUP_INTERVAL_MS = 60 * 60 * 1000;
 const GDRIVE_FILE_NAME = 'diet-tracker-backup.json';
 const GOOGLE_CLIENT_ID = '332987792434-u7r3hdl46asbqo0si3ngqu46kdbgf2at.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
@@ -156,6 +159,38 @@ function updateGoogleUiState(isSignedIn, statusText) {
   if (status && statusText) status.innerText = statusText;
 }
 
+
+function formatBackupTime(ts) {
+  if (!ts) return '尚無紀錄';
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return '尚無紀錄';
+  return d.toLocaleString('zh-TW', { hour12: false });
+}
+
+function refreshLastBackupStatus() {
+  const el = document.getElementById('lastBackupStatus');
+  if (!el) return;
+  const ts = Number(localStorage.getItem(LAST_BACKUP_AT_KEY) || 0);
+  el.innerText = `上次備份：${formatBackupTime(ts)}`;
+}
+
+function setLastBackupTime(ts = Date.now()) {
+  localStorage.setItem(LAST_BACKUP_AT_KEY, String(ts));
+  refreshLastBackupStatus();
+}
+
+async function maybeAutoBackup() {
+  const last = Number(localStorage.getItem(LAST_BACKUP_AT_KEY) || 0);
+  const due = !last || (Date.now() - last) > AUTO_BACKUP_INTERVAL_MS;
+  if (!due) return;
+  try {
+    await backupToGoogleDrive({ silent: true, reason: 'auto-hourly-check' });
+    console.log('[GoogleDrive] auto backup success');
+  } catch (err) {
+    console.log('[GoogleDrive] auto backup skipped/failed', err);
+  }
+}
+
 fetch('consumables.json').then(res => res.json()).then(data => {
   consumablesData = data;
   initializeApp();
@@ -167,6 +202,8 @@ function initializeApp() {
   initGoogleTokenClient();
   updateGoogleUiState(false, '尚未登入 Google');
   restoreStaySignedInPreference();
+  refreshLastBackupStatus();
+  maybeAutoBackup();
   setCurrentDate(currentDate);
 }
 
@@ -544,7 +581,10 @@ async function ensureGoogleAccessToken(interactive = true) {
 }
 
 async function handleGoogleLogin() {
-  try { await ensureGoogleAccessToken(true); }
+  try {
+    await ensureGoogleAccessToken(true);
+    await maybeAutoBackup();
+  }
   catch (err) { console.log('[GoogleAuth] sign-in failed', err); alert(`Google 登入失敗: ${err.message}`); }
 }
 
@@ -585,9 +625,10 @@ async function getAppDataFileId() {
   return data.files && data.files[0] ? data.files[0].id : null;
 }
 
-async function backupToGoogleDrive() {
+async function backupToGoogleDrive(options = {}) {
+  const { silent = false, reason = 'manual' } = options;
   try {
-    await ensureGoogleAccessToken(true);
+    await ensureGoogleAccessToken(!silent);
     const fileId = await getAppDataFileId();
     const metadata = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
     const boundary = 'foo_bar_baz';
@@ -607,13 +648,17 @@ async function backupToGoogleDrive() {
       body
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    console.log('[GoogleDrive] backup success');
-    alert('已備份到 Google Drive appDataFolder');
+    setLastBackupTime(Date.now());
+    console.log('[GoogleDrive] backup success', { reason });
+    if (!silent) alert('已備份到 Google Drive appDataFolder');
+    return true;
   } catch (err) {
-    console.log('[GoogleDrive] backup failed', err);
-    alert(`備份失敗: ${err.message}`);
+    console.log('[GoogleDrive] backup failed', { reason, err });
+    if (!silent) alert(`備份失敗: ${err.message}`);
+    throw err;
   }
 }
+
 
 async function restoreFromGoogleDrive() {
   try {
