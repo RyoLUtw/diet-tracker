@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Diet Tracker</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.tabs {
+  display: flex;
+  margin: 10px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  text-align: center;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #333;
+  color: white;
+}
+
+.container {
+  padding: 20px;
+}
+
+.meal-btn {
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.snack-btn {
+  text-align: center;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.snack-entry {
+  margin: 5px 0;
+  padding: 8px;
+  background: #f2f2f2;
+  border-radius: 10px;
+}
+
+.floating {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-top: 2px solid #ccc;
+  transition: height 0.3s;
+  height: 50px;
+  overflow: hidden;
+}
+
+.floating.expanded {
+  height: 300px;
+}
+
+.floating-header {
+  text-align: center;
+  padding: 10px;
+  cursor: pointer;
+  background: #eee;
+}
+
+.total-grid {
+  display: flex;
+  padding: 10px;
+}
+
+.column {
+  flex: 1;
+  padding: 10px;
+}
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('daily')">Daily</div>
+  <div class="tab" onclick="switchTab('review')">Review</div>
+</div>
+
+<div id="daily" class="container">
+  <div id="mealContainer"></div>
+</div>
+
+<div id="review" class="container" style="display:none;">
+  Review tab coming later.
+</div>
+
+<div class="floating" id="floating">
+  <div class="floating-header" onclick="toggleFloating()">
+    Daily Total Consumption
+  </div>
+  <div class="total-grid">
+    <div class="column">
+      <h4>Keep Lower</h4>
+      <div>Saturated Fat: <span id="satFat">0</span> g</div>
+      <div>Added Sugar: <span id="sugar">0</span> g</div>
+      <div>Sodium: <span id="sodium">0</span> mg</div>
+    </div>
+    <div class="column">
+      <h4>Eat More</h4>
+      <div>Protein: <span id="protein">0</span> g</div>
+      <div>Soluble Fiber: <span id="solFiber">0</span> g</div>
+      <div>Insoluble Fiber: <span id="insFiber">0</span> g</div>
+      <div>Potassium: <span id="potassium">0</span> mg</div>
+      <div>Magnesium: <span id="magnesium">0</span> mg</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let totals = {
+  saturatedFat: 0,
+  addedSugar: 0,
+  sodium: 0,
+  protein: 0,
+  solubleFiber: 0,
+  insolubleFiber: 0,
+  potassium: 0,
+  magnesium: 0
+};
+
+let consumablesData = {};
+
+fetch("consumables.json")
+  .then(res => res.json())
+  .then(data => consumablesData = data);
+
+function switchTab(tab) {
+  document.getElementById("daily").style.display = tab === 'daily' ? "block" : "none";
+  document.getElementById("review").style.display = tab === 'review' ? "block" : "none";
+}
+
+function toggleFloating() {
+  document.getElementById("floating").classList.toggle("expanded");
+}
+
+function createMeals() {
+  const meals = ["Breakfast", "Lunch", "Dinner"];
+  const container = document.getElementById("mealContainer");
+  meals.forEach((meal, index) => {
+    container.appendChild(createMealButton(meal));
+    container.appendChild(createSnackButton());
+  });
+}
+
+function createMealButton(name) {
+  const btn = document.createElement("div");
+  btn.className = "meal-btn";
+  btn.innerText = name;
+  btn.onclick = () => openSelection(btn);
+  return btn;
+}
+
+function createSnackButton() {
+  const div = document.createElement("div");
+  div.className = "snack-btn";
+  div.innerText = "+";
+  div.onclick = function() {
+    const snack = document.createElement("div");
+    snack.className = "snack-entry";
+    snack.innerText = "Snack (click to add item)";
+    snack.onclick = () => openSelection(snack);
+    div.parentNode.insertBefore(snack, div);
+  };
+  return div;
+}
+
+function openSelection(target) {
+  const types = Object.keys(consumablesData);
+  const type = prompt("Enter type: " + types.join(", "));
+  if (!consumablesData[type]) return;
+  const item = consumablesData[type][0];
+  addItem(item);
+  target.innerText = target.innerText + " ✓";
+}
+
+function addItem(item) {
+  totals.saturatedFat += item.saturatedFat;
+  totals.addedSugar += item.addedSugar;
+  totals.sodium += item.sodium;
+  totals.protein += item.protein;
+  totals.solubleFiber += item.solubleFiber;
+  totals.insolubleFiber += item.insolubleFiber;
+  totals.potassium += item.potassium;
+  totals.magnesium += item.magnesium;
+
+  updateDisplay();
+}
+
+function updateDisplay() {
+  document.getElementById("satFat").innerText = totals.saturatedFat.toFixed(1);
+  document.getElementById("sugar").innerText = totals.addedSugar.toFixed(1);
+  document.getElementById("sodium").innerText = totals.sodium.toFixed(0);
+  document.getElementById("protein").innerText = totals.protein.toFixed(1);
+  document.getElementById("solFiber").innerText = totals.solubleFiber.toFixed(1);
+  document.getElementById("insFiber").innerText = totals.insolubleFiber.toFixed(1);
+  document.getElementById("potassium").innerText = totals.potassium.toFixed(0);
+  document.getElementById("magnesium").innerText = totals.magnesium.toFixed(0);
+}
+
+createMeals();
+</script>
+
+</body>
+</html>
