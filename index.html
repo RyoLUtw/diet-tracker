@@ -483,7 +483,10 @@ function initGoogleTokenClient() {
   googleTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: GOOGLE_SCOPES,
-    callback: () => {}
+    callback: () => {},
+    error_callback: (err) => {
+      console.log('[GoogleAuth] token client error', err);
+    }
   });
 }
 
@@ -520,6 +523,7 @@ function requestGoogleToken(promptMode = '') {
     }
     googleTokenClient.callback = (resp) => {
       if (resp.error) return reject(new Error(resp.error));
+      if (!resp.access_token) return reject(new Error('未取得 access token'));
       googleAccessToken = resp.access_token;
       cacheGoogleToken(resp.access_token, resp.expires_in);
       updateGoogleUiState(true, '已取得 Google 授權');
@@ -533,12 +537,10 @@ function requestGoogleToken(promptMode = '') {
 async function ensureGoogleAccessToken(interactive = true) {
   if (googleAccessToken) return googleAccessToken;
   if (restoreGoogleTokenFromCache()) return googleAccessToken;
-  try {
+  if (!interactive) {
     return await requestGoogleToken('none');
-  } catch (_) {
-    if (!interactive) throw new Error('需要重新登入 Google');
-    return await requestGoogleToken('');
   }
+  return await requestGoogleToken('');
 }
 
 async function handleGoogleLogin() {
@@ -564,11 +566,9 @@ function toggleStaySignedIn(checked) {
 function restoreStaySignedInPreference() {
   const stay = localStorage.getItem(STAY_SIGNED_IN_KEY) === '1';
   document.getElementById('staySignedIn').checked = stay;
+  if (stay && restoreGoogleTokenFromCache()) return;
   if (stay) {
-    setTimeout(async () => {
-      try { await ensureGoogleAccessToken(false); }
-      catch (_) { updateGoogleUiState(false, '需重新登入 Google'); }
-    }, 600);
+    updateGoogleUiState(false, '已啟用保持登入（操作時會嘗試靜默登入）');
   }
 }
 
