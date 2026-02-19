@@ -4,239 +4,74 @@
 <meta charset="UTF-8">
 <title>飲食紀錄</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background: #fafafa;
-}
-
-.tabs {
-  display: flex;
-  margin: 10px;
-  gap: 10px;
-}
-
-.tab {
-  flex: 1;
-  padding: 10px;
-  border-radius: 20px;
-  text-align: center;
-  border: 1px solid #ccc;
-  cursor: pointer;
-  background: #fff;
-}
-
-.tab.active {
-  background: #333;
-  color: white;
-}
-
-.container {
-  padding: 20px;
-}
-
-.meal-card,
-.snack-card {
-  border: 1px solid #ddd;
-  border-radius: 14px;
-  background: #fff;
-  padding: 12px;
-  margin-bottom: 12px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.section-title {
-  font-weight: bold;
-}
-
-.select-btn,
-.add-snack-btn,
-.type-plus,
-.modal-action,
-.qty-btn {
-  border: 1px solid #bbb;
-  background: #fff;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
-
-.add-snack-btn {
-  width: 100%;
-  font-size: 18px;
-}
-
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.consumable-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  background: #f4f4f4;
-  border-radius: 10px;
-  padding: 8px;
-}
-
-.item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.item-sub {
-  color: #666;
-  font-size: 12px;
-}
-
-.qty-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.qty-input {
-  width: 54px;
-  text-align: center;
-  padding: 4px;
-  border-radius: 6px;
-  border: 1px solid #bbb;
-}
-
-.floating {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: white;
-  border-top: 2px solid #ccc;
-  transition: height 0.3s;
-  height: 54px;
-  overflow: hidden;
-}
-
-.floating.expanded {
-  height: 320px;
-}
-
-.floating-header {
-  text-align: center;
-  padding: 12px;
-  cursor: pointer;
-  background: #eee;
-  font-weight: bold;
-}
-
-.total-grid {
-  display: flex;
-  padding: 10px;
-}
-
-.column {
-  flex: 1;
-  padding: 10px;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: none;
-  z-index: 1000;
-}
-
-.modal-overlay.open {
-  display: block;
-}
-
-.modal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(760px, calc(100% - 20px));
-  max-height: calc(100% - 20px);
-  background: #fff;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-banner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid #ddd;
-  background: #f8f8f8;
-  position: sticky;
-  top: 0;
-}
-
-.modal-title {
-  font-weight: bold;
-}
-
-.modal-body {
-  padding: 10px;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 10px;
-}
-
-.type-card {
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 8px;
-  background: #fcfcfc;
-}
-
-.type-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.type-items {
-  display: none;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.type-items.open {
-  display: flex;
-}
-
-.option-chip {
-  border: 1px solid #bbb;
-  border-radius: 20px;
-  padding: 5px 10px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.option-chip.selected {
-  background: #333;
-  color: #fff;
-  border-color: #333;
-}
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafafa; }
+.management-container { margin: 10px; border: 1px solid #ccc; border-radius: 12px; background: #fff; overflow: hidden; }
+.management-header { padding: 12px; font-weight: bold; background: #efefef; cursor: pointer; }
+.management-body { display: none; padding: 12px; border-top: 1px solid #ddd; }
+.management-container.expanded .management-body { display: flex; flex-direction: column; gap: 10px; }
+.management-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.management-note { color: #666; font-size: 12px; }
+.tabs { display: flex; margin: 10px; gap: 10px; }
+.tab { flex: 1; padding: 10px; border-radius: 20px; text-align: center; border: 1px solid #ccc; cursor: pointer; background: #fff; }
+.tab.active { background: #333; color: white; }
+.container { padding: 20px; }
+.date-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
+.date-label { min-width: 160px; text-align: center; font-weight: bold; }
+.meal-card,.snack-card { border: 1px solid #ddd; border-radius: 14px; background: #fff; padding: 12px; margin-bottom: 12px; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.section-title { font-weight: bold; }
+.select-btn,.add-snack-btn,.type-plus,.modal-action,.qty-btn,.date-btn,.tool-btn { border: 1px solid #bbb; background: #fff; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+.tool-btn.warn { border-color: #b22; color: #b22; }
+.add-snack-btn { width: 100%; font-size: 18px; }
+.items-list { display: flex; flex-direction: column; gap: 8px; }
+.consumable-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #f4f4f4; border-radius: 10px; padding: 8px; }
+.item-info { display: flex; flex-direction: column; gap: 2px; }
+.item-sub { color: #666; font-size: 12px; }
+.qty-control { display: flex; align-items: center; gap: 6px; }
+.qty-input { width: 54px; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid #bbb; }
+.floating { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 2px solid #ccc; transition: height 0.3s; height: 54px; overflow: hidden; }
+.floating.expanded { height: 320px; }
+.floating-header { text-align: center; padding: 12px; cursor: pointer; background: #eee; font-weight: bold; }
+.total-grid { display: flex; padding: 10px; }
+.column { flex: 1; padding: 10px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: none; z-index: 1000; }
+.modal-overlay.open { display: block; }
+.modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(760px, calc(100% - 20px)); max-height: calc(100% - 20px); background: #fff; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.modal-banner { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; background: #f8f8f8; position: sticky; top: 0; }
+.modal-title { font-weight: bold; }
+.modal-body { padding: 10px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.type-card { border: 1px solid #ddd; border-radius: 10px; padding: 8px; background: #fcfcfc; }
+.type-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.type-items { display: none; flex-wrap: wrap; gap: 6px; }
+.type-items.open { display: flex; }
+.option-chip { border: 1px solid #bbb; border-radius: 20px; padding: 5px 10px; background: #fff; cursor: pointer; }
+.option-chip.selected { background: #333; color: #fff; border-color: #333; }
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
+<div id="management" class="management-container">
+  <div class="management-header" onclick="toggleManagement()">資料管理 ▼</div>
+  <div class="management-body">
+    <div class="management-row">
+      <button class="tool-btn" onclick="handleGoogleLogin()">Google 登入</button>
+      <label><input type="checkbox" id="staySignedIn" onchange="toggleStaySignedIn(this.checked)"> 保持登入偏好</label>
+      <span id="googleStatus" class="management-note">尚未登入 Google</span>
+    </div>
+    <div class="management-row">
+      <button class="tool-btn" onclick="backupToGoogleDrive()">備份到 Google Drive</button>
+      <button class="tool-btn" onclick="restoreFromGoogleDrive()">從 Google Drive 還原</button>
+      <button class="tool-btn" onclick="logoutGoogle()">Google 登出</button>
+    </div>
+    <div class="management-row">
+      <button class="tool-btn" onclick="exportJson()">匯出 JSON</button>
+      <button class="tool-btn" onclick="document.getElementById('jsonImportInput').click()">匯入 JSON</button>
+      <input id="jsonImportInput" type="file" accept="application/json" style="display:none" onchange="importJson(event)">
+      <button class="tool-btn warn" onclick="wipeAllData()">清除全部資料</button>
+    </div>
+    <div class="management-note">Google 備份會寫入 Drive 的 appDataFolder（僅本 App 可見）。</div>
+  </div>
+</div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('daily', this)">每日</div>
@@ -244,17 +79,18 @@ body {
 </div>
 
 <div id="daily" class="container">
+  <div class="date-nav">
+    <button class="date-btn" onclick="shiftDate(-1)">◀ 前一天</button>
+    <div id="dateLabel" class="date-label"></div>
+    <button class="date-btn" onclick="shiftDate(1)">後一天 ▶</button>
+  </div>
   <div id="mealContainer"></div>
 </div>
 
-<div id="review" class="container" style="display:none;">
-  回顧頁籤即將推出。
-</div>
+<div id="review" class="container" style="display:none;">回顧頁籤即將推出。</div>
 
 <div class="floating" id="floating">
-  <div class="floating-header" onclick="toggleFloating()">
-    每日總攝取量
-  </div>
+  <div class="floating-header" onclick="toggleFloating()">每日總攝取量</div>
   <div class="total-grid">
     <div class="column">
       <h4>建議減少</h4>
@@ -285,45 +121,59 @@ body {
 </div>
 
 <script>
-let totals = {
-  saturatedFat: 0,
-  addedSugar: 0,
-  sodium: 0,
-  protein: 0,
-  solubleFiber: 0,
-  insolubleFiber: 0,
-  potassium: 0,
-  magnesium: 0
-};
+const STORAGE_KEY = 'dietTrackerDailyDataV1';
+const STAY_SIGNED_IN_KEY = 'dietTrackerStaySignedIn';
+const GDRIVE_FILE_NAME = 'diet-tracker-backup.json';
+const GOOGLE_CLIENT_ID = '332987792434-u7r3hdl46asbqo0si3ngqu46kdbgf2at.apps.googleusercontent.com';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
+const nutrients = ['saturatedFat','addedSugar','sodium','protein','solubleFiber','insolubleFiber','potassium','magnesium'];
 
+let totals = { saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
 let consumablesData = {};
 let modalTargetList = null;
 let selectedInModal = [];
+let currentDate = new Date();
+let storageState = { version: 1, days: {} };
+let googleTokenClient = null;
+let googleAccessToken = null;
 
-fetch("consumables.json")
-  .then(res => res.json())
-  .then(data => {
-    consumablesData = data;
-    createMeals();
-  });
+fetch('consumables.json').then(res => res.json()).then(data => {
+  consumablesData = data;
+  initializeApp();
+});
+
+function initializeApp() {
+  loadState();
+  createMeals();
+  restoreStaySignedInPreference();
+  initGoogleTokenClient();
+  setCurrentDate(currentDate);
+}
+
+function toggleManagement() {
+  const box = document.getElementById('management');
+  box.classList.toggle('expanded');
+  const open = box.classList.contains('expanded');
+  document.querySelector('.management-header').innerText = open ? '資料管理 ▲' : '資料管理 ▼';
+}
 
 function switchTab(tab, targetEl) {
-  document.getElementById("daily").style.display = tab === 'daily' ? "block" : "none";
-  document.getElementById("review").style.display = tab === 'review' ? "block" : "none";
+  document.getElementById('daily').style.display = tab === 'daily' ? 'block' : 'none';
+  document.getElementById('review').style.display = tab === 'review' ? 'block' : 'none';
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
   targetEl.classList.add('active');
 }
 
-function toggleFloating() {
-  document.getElementById("floating").classList.toggle("expanded");
-}
+function toggleFloating() { document.getElementById('floating').classList.toggle('expanded'); }
 
 function createMeals() {
-  const meals = ["早餐", "午餐", "晚餐"];
-  const container = document.getElementById("mealContainer");
-  meals.forEach((meal) => {
-    container.appendChild(createSectionCard(meal, 'meal-card'));
-  });
+  const container = document.getElementById('mealContainer');
+  container.innerHTML = '';
+  [
+    { title: '早餐', key: 'breakfast' },
+    { title: '午餐', key: 'lunch' },
+    { title: '晚餐', key: 'dinner' }
+  ].forEach(meal => container.appendChild(createSectionCard(meal.title, 'meal-card', meal.key)));
 
   const snackTitle = document.createElement('h3');
   snackTitle.innerText = '點心';
@@ -336,11 +186,11 @@ function createMeals() {
   const snackBtn = document.createElement('button');
   snackBtn.className = 'add-snack-btn';
   snackBtn.innerText = '+ 新增點心';
-  snackBtn.onclick = addSnackSection;
+  snackBtn.onclick = () => addSnackSection();
   container.appendChild(snackBtn);
 }
 
-function createSectionCard(title, className) {
+function createSectionCard(title, className, sectionKey) {
   const card = document.createElement('div');
   card.className = className;
 
@@ -357,21 +207,24 @@ function createSectionCard(title, className) {
 
   const list = document.createElement('div');
   list.className = 'items-list';
-
+  list.dataset.sectionKey = sectionKey;
   btn.onclick = () => openSelectionModal(list);
 
   header.appendChild(titleEl);
   header.appendChild(btn);
   card.appendChild(header);
   card.appendChild(list);
-
   return card;
 }
 
-function addSnackSection() {
+function addSnackSection(items = []) {
   const snackWrap = document.getElementById('snackWrap');
   const count = snackWrap.children.length + 1;
-  snackWrap.appendChild(createSectionCard(`點心 ${count}`, 'snack-card'));
+  const card = createSectionCard(`點心 ${count}`, 'snack-card', `snack-${count}`);
+  snackWrap.appendChild(card);
+  items.forEach(item => addItemRow(card.querySelector('.items-list'), item.item, item.qty));
+  saveCurrentDayData();
+  recalculateTotals();
 }
 
 function openSelectionModal(targetList) {
@@ -382,17 +235,13 @@ function openSelectionModal(targetList) {
   Object.keys(consumablesData).forEach(typeName => {
     const card = document.createElement('div');
     card.className = 'type-card';
-
     const header = document.createElement('div');
     header.className = 'type-header';
-
     const title = document.createElement('span');
     title.innerText = typeName;
-
     const plusBtn = document.createElement('button');
     plusBtn.className = 'type-plus';
     plusBtn.innerText = '+';
-
     const itemWrap = document.createElement('div');
     itemWrap.className = 'type-items';
 
@@ -400,29 +249,22 @@ function openSelectionModal(targetList) {
       const isOpen = itemWrap.classList.toggle('open');
       plusBtn.innerText = isOpen ? '-' : '+';
       if (itemWrap.dataset.loaded === '1') return;
-      const items = consumablesData[typeName] || [];
-      items.forEach(item => {
+      (consumablesData[typeName] || []).forEach(item => {
         const chip = document.createElement('button');
         chip.className = 'option-chip';
         chip.innerText = item.name;
         chip.onclick = () => {
           chip.classList.toggle('selected');
           const exists = selectedInModal.some(sel => sel.name === item.name);
-          if (exists) {
-            selectedInModal = selectedInModal.filter(sel => sel.name !== item.name);
-          } else {
-            selectedInModal.push(item);
-          }
+          selectedInModal = exists ? selectedInModal.filter(sel => sel.name !== item.name) : selectedInModal.concat(item);
         };
         itemWrap.appendChild(chip);
       });
       itemWrap.dataset.loaded = '1';
     };
 
-    header.appendChild(title);
-    header.appendChild(plusBtn);
-    card.appendChild(header);
-    card.appendChild(itemWrap);
+    header.appendChild(title); header.appendChild(plusBtn);
+    card.appendChild(header); card.appendChild(itemWrap);
     document.getElementById('modalBody').appendChild(card);
   });
 
@@ -435,92 +277,61 @@ function closeModal() {
 }
 
 function confirmSelection() {
-  if (!modalTargetList || selectedInModal.length === 0) {
-    closeModal();
-    return;
-  }
-
-  selectedInModal.forEach(item => addItemRow(modalTargetList, item));
+  if (!modalTargetList || selectedInModal.length === 0) return closeModal();
+  selectedInModal.forEach(item => addItemRow(modalTargetList, item, 1));
   closeModal();
   recalculateTotals();
+  saveCurrentDayData();
 }
 
-function addItemRow(list, item) {
+function addItemRow(list, item, qty = 1) {
   const row = document.createElement('div');
   row.className = 'consumable-row';
 
   const info = document.createElement('div');
   info.className = 'item-info';
-
   const name = document.createElement('div');
   name.innerText = item.name;
-
   const sub = document.createElement('div');
   sub.className = 'item-sub';
   sub.innerText = `蛋白質 ${item.protein}g / 鈉 ${item.sodium}mg`;
-
-  info.appendChild(name);
-  info.appendChild(sub);
+  info.appendChild(name); info.appendChild(sub);
 
   const qtyControl = document.createElement('div');
   qtyControl.className = 'qty-control';
-
-  const minus = document.createElement('button');
-  minus.className = 'qty-btn';
-  minus.innerText = '-';
-
+  const minus = document.createElement('button'); minus.className = 'qty-btn'; minus.innerText = '-';
   const input = document.createElement('input');
-  input.type = 'number';
-  input.min = '0';
-  input.step = '1';
-  input.value = '1';
-  input.className = 'qty-input';
-
-  const plus = document.createElement('button');
-  plus.className = 'qty-btn';
-  plus.innerText = '+';
+  input.type = 'number'; input.min = '0'; input.step = '1'; input.value = String(qty); input.className = 'qty-input';
+  const plus = document.createElement('button'); plus.className = 'qty-btn'; plus.innerText = '+';
 
   minus.onclick = () => {
     const next = Math.max(0, Number(input.value || 0) - 1);
     input.value = next;
     if (next === 0) row.remove();
     recalculateTotals();
+    saveCurrentDayData();
   };
   plus.onclick = () => {
     input.value = Number(input.value || 0) + 1;
     recalculateTotals();
+    saveCurrentDayData();
   };
   input.onchange = () => {
     if (Number(input.value || 0) < 0) input.value = 0;
     if (Number(input.value || 0) === 0) row.remove();
     recalculateTotals();
+    saveCurrentDayData();
   };
 
-  qtyControl.appendChild(minus);
-  qtyControl.appendChild(input);
-  qtyControl.appendChild(plus);
-
-  row.appendChild(info);
-  row.appendChild(qtyControl);
-
-  const nutrients = ['saturatedFat', 'addedSugar', 'sodium', 'protein', 'solubleFiber', 'insolubleFiber', 'potassium', 'magnesium'];
-  nutrients.forEach(n => row.dataset[n] = item[n]);
-
+  qtyControl.appendChild(minus); qtyControl.appendChild(input); qtyControl.appendChild(plus);
+  row.appendChild(info); row.appendChild(qtyControl);
+  nutrients.forEach(n => row.dataset[n] = item[n] || 0);
+  row.dataset.item = JSON.stringify(item);
   list.appendChild(row);
 }
 
 function recalculateTotals() {
-  totals = {
-    saturatedFat: 0,
-    addedSugar: 0,
-    sodium: 0,
-    protein: 0,
-    solubleFiber: 0,
-    insolubleFiber: 0,
-    potassium: 0,
-    magnesium: 0
-  };
-
+  totals = { saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
   document.querySelectorAll('.consumable-row').forEach(row => {
     const qty = Number(row.querySelector('.qty-input').value || 0);
     totals.saturatedFat += Number(row.dataset.saturatedfat) * qty;
@@ -532,21 +343,236 @@ function recalculateTotals() {
     totals.potassium += Number(row.dataset.potassium) * qty;
     totals.magnesium += Number(row.dataset.magnesium) * qty;
   });
-
   updateDisplay();
 }
 
 function updateDisplay() {
-  document.getElementById("satFat").innerText = totals.saturatedFat.toFixed(1);
-  document.getElementById("sugar").innerText = totals.addedSugar.toFixed(1);
-  document.getElementById("sodium").innerText = totals.sodium.toFixed(0);
-  document.getElementById("protein").innerText = totals.protein.toFixed(1);
-  document.getElementById("solFiber").innerText = totals.solubleFiber.toFixed(1);
-  document.getElementById("insFiber").innerText = totals.insolubleFiber.toFixed(1);
-  document.getElementById("potassium").innerText = totals.potassium.toFixed(0);
-  document.getElementById("magnesium").innerText = totals.magnesium.toFixed(0);
+  document.getElementById('satFat').innerText = totals.saturatedFat.toFixed(1);
+  document.getElementById('sugar').innerText = totals.addedSugar.toFixed(1);
+  document.getElementById('sodium').innerText = totals.sodium.toFixed(0);
+  document.getElementById('protein').innerText = totals.protein.toFixed(1);
+  document.getElementById('solFiber').innerText = totals.solubleFiber.toFixed(1);
+  document.getElementById('insFiber').innerText = totals.insolubleFiber.toFixed(1);
+  document.getElementById('potassium').innerText = totals.potassium.toFixed(0);
+  document.getElementById('magnesium').innerText = totals.magnesium.toFixed(0);
+}
+
+function dateKey(date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,10); }
+function setCurrentDate(date) {
+  currentDate = new Date(date);
+  document.getElementById('dateLabel').innerText = dateKey(currentDate);
+  renderCurrentDay();
+}
+function shiftDate(diff) {
+  const d = new Date(currentDate);
+  d.setDate(d.getDate() + diff);
+  setCurrentDate(d);
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    storageState = raw ? JSON.parse(raw) : { version: 1, days: {} };
+    if (!storageState.days) storageState.days = {};
+  } catch (_) {
+    storageState = { version: 1, days: {} };
+  }
+}
+
+function persistState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(storageState));
+}
+
+function collectListData(listEl) {
+  return Array.from(listEl.querySelectorAll('.consumable-row')).map(row => ({
+    item: JSON.parse(row.dataset.item),
+    qty: Number(row.querySelector('.qty-input').value || 0)
+  })).filter(r => r.qty > 0);
+}
+
+function saveCurrentDayData() {
+  const key = dateKey(currentDate);
+  const lists = document.querySelectorAll('.items-list');
+  const day = { breakfast: [], lunch: [], dinner: [], snacks: [] };
+  lists.forEach(list => {
+    const section = list.dataset.sectionKey;
+    const data = collectListData(list);
+    if (section === 'breakfast') day.breakfast = data;
+    else if (section === 'lunch') day.lunch = data;
+    else if (section === 'dinner') day.dinner = data;
+    else if (section && section.startsWith('snack-')) day.snacks.push(data);
+  });
+  storageState.days[key] = day;
+  persistState();
+}
+
+function renderCurrentDay() {
+  createMeals();
+  const key = dateKey(currentDate);
+  const day = storageState.days[key] || { breakfast: [], lunch: [], dinner: [], snacks: [] };
+  const map = {
+    breakfast: document.querySelector('[data-section-key="breakfast"]'),
+    lunch: document.querySelector('[data-section-key="lunch"]'),
+    dinner: document.querySelector('[data-section-key="dinner"]')
+  };
+  day.breakfast.forEach(entry => addItemRow(map.breakfast, entry.item, entry.qty));
+  day.lunch.forEach(entry => addItemRow(map.lunch, entry.item, entry.qty));
+  day.dinner.forEach(entry => addItemRow(map.dinner, entry.item, entry.qty));
+  (day.snacks || []).forEach(snackList => addSnackSection(snackList));
+  recalculateTotals();
+}
+
+function exportJson() {
+  const blob = new Blob([JSON.stringify(storageState, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'diet-tracker-data.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importJson(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed || typeof parsed !== 'object' || !parsed.days) throw new Error('invalid');
+      storageState = parsed;
+      persistState();
+      renderCurrentDay();
+      alert('匯入成功');
+    } catch (_) {
+      alert('匯入失敗，請確認 JSON 格式');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function wipeAllData() {
+  if (!confirm('確定要刪除所有天數資料嗎？')) return;
+  storageState = { version: 1, days: {} };
+  persistState();
+  renderCurrentDay();
+}
+
+function initGoogleTokenClient() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) return;
+  googleTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: GOOGLE_SCOPES,
+    callback: (resp) => {
+      if (resp.access_token) {
+        googleAccessToken = resp.access_token;
+        document.getElementById('googleStatus').innerText = '已取得 Google 授權';
+      }
+    }
+  });
+}
+
+function requestGoogleToken(promptMode = 'consent') {
+  return new Promise((resolve, reject) => {
+    if (!googleTokenClient) {
+      initGoogleTokenClient();
+      if (!googleTokenClient) return reject(new Error('Google SDK 尚未載入'));
+    }
+    googleTokenClient.callback = (resp) => {
+      if (resp.error) return reject(new Error(resp.error));
+      googleAccessToken = resp.access_token;
+      document.getElementById('googleStatus').innerText = '已取得 Google 授權';
+      resolve(resp.access_token);
+    };
+    googleTokenClient.requestAccessToken({ prompt: promptMode });
+  });
+}
+
+async function handleGoogleLogin() {
+  try { await requestGoogleToken('consent'); }
+  catch (err) { alert(`Google 登入失敗: ${err.message}`); }
+}
+
+function logoutGoogle() {
+  googleAccessToken = null;
+  document.getElementById('googleStatus').innerText = '尚未登入 Google';
+}
+
+function toggleStaySignedIn(checked) {
+  localStorage.setItem(STAY_SIGNED_IN_KEY, checked ? '1' : '0');
+}
+
+function restoreStaySignedInPreference() {
+  const stay = localStorage.getItem(STAY_SIGNED_IN_KEY) === '1';
+  document.getElementById('staySignedIn').checked = stay;
+  if (stay) {
+    setTimeout(async () => {
+      try { await requestGoogleToken('none'); }
+      catch (_) { document.getElementById('googleStatus').innerText = '需重新登入 Google'; }
+    }, 600);
+  }
+}
+
+async function getAppDataFileId() {
+  const params = new URLSearchParams({
+    q: `name='${GDRIVE_FILE_NAME}' and trashed=false`,
+    spaces: 'appDataFolder',
+    fields: 'files(id,name)'
+  });
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${googleAccessToken}` }
+  });
+  const data = await res.json();
+  return data.files && data.files[0] ? data.files[0].id : null;
+}
+
+async function backupToGoogleDrive() {
+  try {
+    if (!googleAccessToken) await requestGoogleToken('consent');
+    const fileId = await getAppDataFileId();
+    const metadata = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
+    const boundary = 'foo_bar_baz';
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(storageState)}\r\n` +
+      `--${boundary}--`;
+
+    const method = fileId ? 'PATCH' : 'POST';
+    const url = fileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+    const res = await fetch(url, {
+      method,
+      headers: { Authorization: `Bearer ${googleAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    alert('已備份到 Google Drive appDataFolder');
+  } catch (err) {
+    alert(`備份失敗: ${err.message}`);
+  }
+}
+
+async function restoreFromGoogleDrive() {
+  try {
+    if (!googleAccessToken) await requestGoogleToken('consent');
+    const fileId = await getAppDataFileId();
+    if (!fileId) return alert('找不到雲端備份');
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${googleAccessToken}` }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!data.days) throw new Error('備份格式錯誤');
+    storageState = data;
+    persistState();
+    renderCurrentDay();
+    alert('已從 Google Drive 還原');
+  } catch (err) {
+    alert(`還原失敗: ${err.message}`);
+  }
 }
 </script>
-
 </body>
 </html>
