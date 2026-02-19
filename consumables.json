@@ -1,0 +1,42 @@
+{
+  "全穀雜糧類": [
+    {"name":"糙米飯", "saturatedFat":0.1, "addedSugar":0, "sodium":2, "protein":2.6, "solubleFiber":0.4, "insolubleFiber":1.2, "potassium":86, "magnesium":43},
+    {"name":"燕麥片", "saturatedFat":0.2, "addedSugar":0, "sodium":2, "protein":3.0, "solubleFiber":0.8, "insolubleFiber":1.5, "potassium":73, "magnesium":36},
+    {"name":"地瓜", "saturatedFat":0.0, "addedSugar":0, "sodium":41, "protein":1.3, "solubleFiber":0.5, "insolubleFiber":1.8, "potassium":337, "magnesium":25}
+  ],
+  "豆魚蛋肉類": [
+    {"name":"雞胸肉", "saturatedFat":0.6, "addedSugar":0, "sodium":44, "protein":23.0, "solubleFiber":0, "insolubleFiber":0, "potassium":256, "magnesium":29},
+    {"name":"嫩豆腐", "saturatedFat":0.5, "addedSugar":0, "sodium":15, "protein":8.0, "solubleFiber":0.1, "insolubleFiber":0.2, "potassium":121, "magnesium":30},
+    {"name":"鮭魚", "saturatedFat":1.8, "addedSugar":0, "sodium":59, "protein":20.0, "solubleFiber":0, "insolubleFiber":0, "potassium":363, "magnesium":27}
+  ],
+  "乳品類": [
+    {"name":"低脂牛奶", "saturatedFat":1.0, "addedSugar":0, "sodium":95, "protein":8.3, "solubleFiber":0, "insolubleFiber":0, "potassium":366, "magnesium":27},
+    {"name":"無糖優格", "saturatedFat":1.1, "addedSugar":0, "sodium":55, "protein":5.0, "solubleFiber":0, "insolubleFiber":0, "potassium":240, "magnesium":17},
+    {"name":"起司片", "saturatedFat":3.2, "addedSugar":0, "sodium":260, "protein":6.0, "solubleFiber":0, "insolubleFiber":0, "potassium":43, "magnesium":9}
+  ],
+  "蔬菜類": [
+    {"name":"花椰菜", "saturatedFat":0.1, "addedSugar":0, "sodium":30, "protein":2.8, "solubleFiber":1.0, "insolubleFiber":1.5, "potassium":316, "magnesium":21},
+    {"name":"菠菜", "saturatedFat":0.1, "addedSugar":0, "sodium":79, "protein":2.9, "solubleFiber":0.4, "insolubleFiber":1.8, "potassium":558, "magnesium":79},
+    {"name":"胡蘿蔔", "saturatedFat":0.0, "addedSugar":0, "sodium":69, "protein":0.9, "solubleFiber":0.6, "insolubleFiber":2.2, "potassium":320, "magnesium":12}
+  ],
+  "水果類": [
+    {"name":"蘋果", "saturatedFat":0.0, "addedSugar":0, "sodium":1, "protein":0.3, "solubleFiber":0.9, "insolubleFiber":1.5, "potassium":107, "magnesium":5},
+    {"name":"香蕉", "saturatedFat":0.1, "addedSugar":0, "sodium":1, "protein":1.1, "solubleFiber":0.7, "insolubleFiber":1.9, "potassium":358, "magnesium":27},
+    {"name":"奇異果", "saturatedFat":0.0, "addedSugar":0, "sodium":3, "protein":1.1, "solubleFiber":0.8, "insolubleFiber":1.3, "potassium":312, "magnesium":17}
+  ],
+  "油脂與堅果種子類": [
+    {"name":"橄欖油", "saturatedFat":1.9, "addedSugar":0, "sodium":0, "protein":0, "solubleFiber":0, "insolubleFiber":0, "potassium":0, "magnesium":0},
+    {"name":"杏仁", "saturatedFat":1.1, "addedSugar":0, "sodium":1, "protein":6.0, "solubleFiber":0.3, "insolubleFiber":2.9, "potassium":208, "magnesium":76},
+    {"name":"核桃", "saturatedFat":0.9, "addedSugar":0, "sodium":1, "protein":4.3, "solubleFiber":0.2, "insolubleFiber":1.8, "potassium":125, "magnesium":45}
+  ],
+  "飲品類": [
+    {"name":"無糖豆漿", "saturatedFat":0.3, "addedSugar":0, "sodium":30, "protein":7.0, "solubleFiber":0.3, "insolubleFiber":0.2, "potassium":300, "magnesium":38},
+    {"name":"黑咖啡", "saturatedFat":0.0, "addedSugar":0, "sodium":5, "protein":0.3, "solubleFiber":0, "insolubleFiber":0, "potassium":116, "magnesium":7},
+    {"name":"綠茶", "saturatedFat":0.0, "addedSugar":0, "sodium":3, "protein":0.0, "solubleFiber":0, "insolubleFiber":0, "potassium":19, "magnesium":2}
+  ],
+  "點心類": [
+    {"name":"全麥吐司", "saturatedFat":0.3, "addedSugar":1.2, "sodium":130, "protein":3.6, "solubleFiber":0.4, "insolubleFiber":1.6, "potassium":81, "magnesium":23},
+    {"name":"茶葉蛋", "saturatedFat":1.6, "addedSugar":0, "sodium":180, "protein":6.3, "solubleFiber":0, "insolubleFiber":0, "potassium":69, "magnesium":6},
+    {"name":"無糖堅果棒", "saturatedFat":1.3, "addedSugar":0.5, "sodium":40, "protein":4.5, "solubleFiber":0.5, "insolubleFiber":1.8, "potassium":140, "magnesium":42}
+  ]
+}
