@@ -11,6 +11,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .management-container.expanded .management-body { display: flex; flex-direction: column; gap: 10px; }
 .management-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .management-note { color: #666; font-size: 12px; }
+.auth-indicator { font-size: 12px; font-weight: bold; padding: 2px 8px; border-radius: 999px; background: #f5d6d6; color: #a11; }
+.auth-indicator.connected { background: #d8f2dc; color: #176d2b; }
 .tabs { display: flex; margin: 10px; gap: 10px; }
 .tab { flex: 1; padding: 10px; border-radius: 20px; text-align: center; border: 1px solid #ccc; cursor: pointer; background: #fff; }
 .tab.active { background: #333; color: white; }
@@ -54,14 +56,15 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   <div class="management-header" onclick="toggleManagement()">資料管理 ▼</div>
   <div class="management-body">
     <div class="management-row">
-      <button class="tool-btn" onclick="handleGoogleLogin()">Google 登入</button>
+      <button id="googleLoginBtn" class="tool-btn" onclick="handleGoogleLogin()">Google 登入</button>
+      <button id="googleLogoutBtn" class="tool-btn" onclick="logoutGoogle()" style="display:none">Google 登出</button>
       <label><input type="checkbox" id="staySignedIn" onchange="toggleStaySignedIn(this.checked)"> 保持登入偏好</label>
+      <span id="googleIndicator" class="auth-indicator">未連線</span>
       <span id="googleStatus" class="management-note">尚未登入 Google</span>
     </div>
     <div class="management-row">
       <button class="tool-btn" onclick="backupToGoogleDrive()">備份到 Google Drive</button>
       <button class="tool-btn" onclick="restoreFromGoogleDrive()">從 Google Drive 還原</button>
-      <button class="tool-btn" onclick="logoutGoogle()">Google 登出</button>
     </div>
     <div class="management-row">
       <button class="tool-btn" onclick="exportJson()">匯出 JSON</button>
@@ -138,6 +141,21 @@ let storageState = { version: 1, days: {} };
 let googleTokenClient = null;
 let googleAccessToken = null;
 
+
+function updateGoogleUiState(isSignedIn, statusText) {
+  const loginBtn = document.getElementById('googleLoginBtn');
+  const logoutBtn = document.getElementById('googleLogoutBtn');
+  const indicator = document.getElementById('googleIndicator');
+  const status = document.getElementById('googleStatus');
+  if (loginBtn) loginBtn.style.display = isSignedIn ? 'none' : 'inline-block';
+  if (logoutBtn) logoutBtn.style.display = isSignedIn ? 'inline-block' : 'none';
+  if (indicator) {
+    indicator.innerText = isSignedIn ? '已連線' : '未連線';
+    indicator.classList.toggle('connected', isSignedIn);
+  }
+  if (status && statusText) status.innerText = statusText;
+}
+
 fetch('consumables.json').then(res => res.json()).then(data => {
   consumablesData = data;
   initializeApp();
@@ -148,6 +166,7 @@ function initializeApp() {
   createMeals();
   restoreStaySignedInPreference();
   initGoogleTokenClient();
+  updateGoogleUiState(false, '尚未登入 Google');
   setCurrentDate(currentDate);
 }
 
@@ -484,7 +503,8 @@ function restoreGoogleTokenFromCache() {
       return false;
     }
     googleAccessToken = parsed.token;
-    document.getElementById('googleStatus').innerText = '已登入（使用快取憑證）';
+    updateGoogleUiState(true, '已登入（使用快取憑證）');
+    console.log('[GoogleAuth] restore token cache success');
     return true;
   } catch (_) {
     localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
@@ -502,7 +522,8 @@ function requestGoogleToken(promptMode = '') {
       if (resp.error) return reject(new Error(resp.error));
       googleAccessToken = resp.access_token;
       cacheGoogleToken(resp.access_token, resp.expires_in);
-      document.getElementById('googleStatus').innerText = '已取得 Google 授權';
+      updateGoogleUiState(true, '已取得 Google 授權');
+      console.log('[GoogleAuth] sign-in success');
       resolve(resp.access_token);
     };
     googleTokenClient.requestAccessToken({ prompt: promptMode });
@@ -522,7 +543,7 @@ async function ensureGoogleAccessToken(interactive = true) {
 
 async function handleGoogleLogin() {
   try { await ensureGoogleAccessToken(true); }
-  catch (err) { alert(`Google 登入失敗: ${err.message}`); }
+  catch (err) { console.log('[GoogleAuth] sign-in failed', err); alert(`Google 登入失敗: ${err.message}`); }
 }
 
 function logoutGoogle() {
@@ -531,7 +552,8 @@ function logoutGoogle() {
   }
   googleAccessToken = null;
   localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
-  document.getElementById('googleStatus').innerText = '尚未登入 Google';
+  updateGoogleUiState(false, '尚未登入 Google');
+  console.log('[GoogleAuth] sign-out success');
 }
 
 function toggleStaySignedIn(checked) {
@@ -545,7 +567,7 @@ function restoreStaySignedInPreference() {
   if (stay) {
     setTimeout(async () => {
       try { await ensureGoogleAccessToken(false); }
-      catch (_) { document.getElementById('googleStatus').innerText = '需重新登入 Google'; }
+      catch (_) { updateGoogleUiState(false, '需重新登入 Google'); }
     }, 600);
   }
 }
@@ -585,8 +607,10 @@ async function backupToGoogleDrive() {
       body
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    console.log('[GoogleDrive] backup success');
     alert('已備份到 Google Drive appDataFolder');
   } catch (err) {
+    console.log('[GoogleDrive] backup failed', err);
     alert(`備份失敗: ${err.message}`);
   }
 }
@@ -605,8 +629,10 @@ async function restoreFromGoogleDrive() {
     storageState = data;
     persistState();
     renderCurrentDay();
+    console.log('[GoogleDrive] load success');
     alert('已從 Google Drive 還原');
   } catch (err) {
+    console.log('[GoogleDrive] load failed', err);
     alert(`還原失敗: ${err.message}`);
   }
 }
