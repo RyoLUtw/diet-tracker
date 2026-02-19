@@ -164,9 +164,9 @@ fetch('consumables.json').then(res => res.json()).then(data => {
 function initializeApp() {
   loadState();
   createMeals();
-  restoreStaySignedInPreference();
   initGoogleTokenClient();
   updateGoogleUiState(false, '尚未登入 Google');
+  restoreStaySignedInPreference();
   setCurrentDate(currentDate);
 }
 
