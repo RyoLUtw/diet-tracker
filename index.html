@@ -113,6 +113,8 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   </div>
 </div>
 
+<a class="editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
+
 <div id="selectionModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-banner">
@@ -221,7 +223,11 @@ function switchTab(tab, targetEl) {
   targetEl.classList.add('active');
 }
 
-function toggleFloating() { document.getElementById('floating').classList.toggle('expanded'); }
+function toggleFloating() {
+  const floating = document.getElementById("floating");
+  floating.classList.toggle("expanded");
+  document.getElementById('editorLinkBtn').classList.toggle('up', floating.classList.contains('expanded'));
+}
 
 function createMeals() {
   const container = document.getElementById('mealContainer');
@@ -391,12 +397,12 @@ function recalculateTotals() {
   totals = { saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
   document.querySelectorAll('.consumable-row').forEach(row => {
     const qty = Number(row.querySelector('.qty-input').value || 0);
-    totals.saturatedFat += Number(row.dataset.saturatedfat) * qty;
-    totals.addedSugar += Number(row.dataset.addedsugar) * qty;
+    totals.saturatedFat += Number(row.dataset.saturatedFat) * qty;
+    totals.addedSugar += Number(row.dataset.addedSugar) * qty;
     totals.sodium += Number(row.dataset.sodium) * qty;
     totals.protein += Number(row.dataset.protein) * qty;
-    totals.solubleFiber += Number(row.dataset.solublefiber) * qty;
-    totals.insolubleFiber += Number(row.dataset.insolublefiber) * qty;
+    totals.solubleFiber += Number(row.dataset.solubleFiber) * qty;
+    totals.insolubleFiber += Number(row.dataset.insolubleFiber) * qty;
     totals.potassium += Number(row.dataset.potassium) * qty;
     totals.magnesium += Number(row.dataset.magnesium) * qty;
   });
