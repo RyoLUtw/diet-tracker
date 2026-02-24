@@ -32,7 +32,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .qty-control { display: flex; align-items: center; gap: 6px; }
 .qty-input { width: 54px; text-align: center; padding: 4px; border-radius: 6px; border: 1px solid #bbb; }
 .floating { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top: 2px solid #ccc; transition: height 0.3s; height: 54px; overflow: hidden; z-index: 5;}
-.floating.expanded { height: 320px; }
+.floating.expanded { height: 430px; }
 .floating-header { text-align: center; padding: 12px; cursor: pointer; background: #eee; font-weight: bold; }
 .total-grid { display: flex; padding: 10px; }
 .column { flex: 1; padding: 10px; }
@@ -119,15 +119,18 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
       <h4>建議減少</h4>
       <div>飽和脂肪：<span id="satFat">0</span> g</div>
       <div>添加糖：<span id="sugar">0</span> g</div>
-      <div>鈉：<span id="sodium">0</span> mg</div>
     </div>
     <div class="column">
-      <h4>建議增加</h4>
-      <div>蛋白質：<span id="protein">0</span> g</div>
-      <div>水溶性纖維：<span id="solFiber">0</span> g</div>
-      <div>非水溶性纖維：<span id="insFiber">0</span> g</div>
-      <div>鉀：<span id="potassium">0</span> mg</div>
-      <div>鎂：<span id="magnesium">0</span> mg</div>
+      <h4>建議足量</h4>
+      <div>熱量：<span id="calories">0/1200</span> kcal</div>
+      <div>碳水化合物：<span id="carbohydrates">0/130</span> g</div>
+      <div>蛋白質：<span id="proteinAdequate">0/60</span> g</div>
+      <div>鈉：<span id="sodiumAdequate">0/1500</span> mg</div>
+      <div>總脂肪：<span id="totalFat">0/44</span> g</div>
+      <div>水溶性纖維：<span id="solFiberAdequate">0/6</span> g</div>
+      <div>非水溶性纖維：<span id="insFiberAdequate">0/14</span> g</div>
+      <div>鉀：<span id="potassiumAdequate">0/3500</span> mg</div>
+      <div>鎂：<span id="magnesiumAdequate">0/350</span> mg</div>
     </div>
   </div>
 </div>
@@ -154,9 +157,10 @@ const AUTO_BACKUP_INTERVAL_MS = 60 * 60 * 1000;
 const GDRIVE_FILE_NAME = 'diet-tracker-backup.json';
 const GOOGLE_CLIENT_ID = '332987792434-u7r3hdl46asbqo0si3ngqu46kdbgf2at.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-const nutrients = ['saturatedFat','addedSugar','sodium','protein','solubleFiber','insolubleFiber','potassium','magnesium'];
+const nutrients = ['calories','totalFat','carbohydrates','saturatedFat','addedSugar','sodium','protein','solubleFiber','insolubleFiber','potassium','magnesium'];
+const suggestedMinimums = { calories: 1200, carbohydrates: 130, protein: 60, sodium: 1500, totalFat: 44, solubleFiber: 6, insolubleFiber: 14, potassium: 3500, magnesium: 350 };
 
-let totals = { saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
+let totals = { calories:0, totalFat:0, carbohydrates:0, saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
 let consumablesData = {};
 let modalTargetList = null;
 let selectedInModal = [];
@@ -376,7 +380,7 @@ function addItemRow(list, item, qty = 1) {
   name.innerText = item.name;
   const sub = document.createElement('div');
   sub.className = 'item-sub';
-  sub.innerText = `蛋白質 ${item.protein}g / 鈉 ${item.sodium}mg`;
+  sub.innerText = `熱量 ${item.calories || 0}kcal / 碳水 ${item.carbohydrates || 0}g`;
   info.appendChild(name); info.appendChild(sub);
 
   const qtyControl = document.createElement('div');
@@ -413,9 +417,12 @@ function addItemRow(list, item, qty = 1) {
 }
 
 function recalculateTotals() {
-  totals = { saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
+  totals = { calories:0, totalFat:0, carbohydrates:0, saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
   document.querySelectorAll('.consumable-row').forEach(row => {
     const qty = Number(row.querySelector('.qty-input').value || 0);
+    totals.calories += Number(row.dataset.calories) * qty;
+    totals.totalFat += Number(row.dataset.totalFat) * qty;
+    totals.carbohydrates += Number(row.dataset.carbohydrates) * qty;
     totals.saturatedFat += Number(row.dataset.saturatedFat) * qty;
     totals.addedSugar += Number(row.dataset.addedSugar) * qty;
     totals.sodium += Number(row.dataset.sodium) * qty;
@@ -431,12 +438,15 @@ function recalculateTotals() {
 function updateDisplay() {
   document.getElementById('satFat').innerText = totals.saturatedFat.toFixed(1);
   document.getElementById('sugar').innerText = totals.addedSugar.toFixed(1);
-  document.getElementById('sodium').innerText = totals.sodium.toFixed(0);
-  document.getElementById('protein').innerText = totals.protein.toFixed(1);
-  document.getElementById('solFiber').innerText = totals.solubleFiber.toFixed(1);
-  document.getElementById('insFiber').innerText = totals.insolubleFiber.toFixed(1);
-  document.getElementById('potassium').innerText = totals.potassium.toFixed(0);
-  document.getElementById('magnesium').innerText = totals.magnesium.toFixed(0);
+  document.getElementById('calories').innerText = `${totals.calories.toFixed(0)}/${suggestedMinimums.calories}`;
+  document.getElementById('carbohydrates').innerText = `${totals.carbohydrates.toFixed(1)}/${suggestedMinimums.carbohydrates}`;
+  document.getElementById('proteinAdequate').innerText = `${totals.protein.toFixed(1)}/${suggestedMinimums.protein}`;
+  document.getElementById('sodiumAdequate').innerText = `${totals.sodium.toFixed(0)}/${suggestedMinimums.sodium}`;
+  document.getElementById('totalFat').innerText = `${totals.totalFat.toFixed(1)}/${suggestedMinimums.totalFat}`;
+  document.getElementById('solFiberAdequate').innerText = `${totals.solubleFiber.toFixed(1)}/${suggestedMinimums.solubleFiber}`;
+  document.getElementById('insFiberAdequate').innerText = `${totals.insolubleFiber.toFixed(1)}/${suggestedMinimums.insolubleFiber}`;
+  document.getElementById('potassiumAdequate').innerText = `${totals.potassium.toFixed(0)}/${suggestedMinimums.potassium}`;
+  document.getElementById('magnesiumAdequate').innerText = `${totals.magnesium.toFixed(0)}/${suggestedMinimums.magnesium}`;
 }
 
 function dateKey(date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0,10); }
