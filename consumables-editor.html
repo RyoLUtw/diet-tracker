@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>可食項目編輯器</title>
+<style>
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f5f7; color: #222; }
+.page { max-width: 1100px; margin: 0 auto; padding: 18px; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 10px; position: sticky; top: 0; background: #f4f5f7; padding: 8px 0; z-index: 10; }
+.btn { border: 1px solid #bbb; border-radius: 8px; background: #fff; padding: 8px 12px; cursor: pointer; }
+.btn.primary { background: #333; color: #fff; border-color: #333; }
+.btn.danger { background: #b32d2d; color: #fff; border-color: #b32d2d; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.input, textarea, select { width: 100%; box-sizing: border-box; border: 1px solid #bbb; border-radius: 8px; padding: 8px; font-size: 14px; }
+textarea { min-height: 140px; resize: vertical; }
+.card { background: #fff; border-radius: 12px; border: 1px solid #ddd; padding: 14px; margin-bottom: 14px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row > * { flex: 1; min-width: 150px; }
+h2, h3 { margin: 8px 0 12px; }
+.items-wrap { display: flex; flex-direction: column; gap: 8px; }
+.item-row { border: 1px solid #e1e1e1; border-radius: 10px; padding: 10px; background: #fcfcfc; }
+.msg { margin-top: 8px; font-size: 13px; }
+.msg.error { color: #b32d2d; }
+.msg.success { color: #2e7d32; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; z-index: 30; }
+.modal-overlay.open { display: block; }
+.modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100% - 24px)); background: #fff; border-radius: 12px; padding: 16px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h2>可食項目編輯器</h2>
+    <button class="btn primary" id="downloadBtn">下載 JSON</button>
+  </div>
+
+  <div class="card">
+    <h3>新增可食項目（手動）</h3>
+    <div class="grid">
+      <div><label>分類</label><input class="input" id="newCategory" placeholder="例如：全穀雜糧類" /></div>
+      <div><label>名稱</label><input class="input" id="newName" /></div>
+      <div><label>飽和脂肪</label><input class="input" type="number" step="0.1" id="newSaturatedFat" value="0" /></div>
+      <div><label>添加糖</label><input class="input" type="number" step="0.1" id="newAddedSugar" value="0" /></div>
+      <div><label>鈉</label><input class="input" type="number" step="0.1" id="newSodium" value="0" /></div>
+      <div><label>蛋白質</label><input class="input" type="number" step="0.1" id="newProtein" value="0" /></div>
+      <div><label>水溶性纖維</label><input class="input" type="number" step="0.1" id="newSolubleFiber" value="0" /></div>
+      <div><label>非水溶性纖維</label><input class="input" type="number" step="0.1" id="newInsolubleFiber" value="0" /></div>
+      <div><label>鉀</label><input class="input" type="number" step="0.1" id="newPotassium" value="0" /></div>
+      <div><label>鎂</label><input class="input" type="number" step="0.1" id="newMagnesium" value="0" /></div>
+    </div>
+    <div style="margin-top:10px;"><button class="btn" id="addManualBtn">新增項目</button></div>
+    <div class="msg" id="addMsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>新增可食項目（貼上 JSON）</h3>
+    <textarea id="pasteJson" placeholder='貼上 JSON，例如：{"全穀雜糧類":[{"name":"糙米飯",...}]}'></textarea>
+    <div style="margin-top:10px;"><button class="btn" id="importJsonBtn">解析並匯入</button></div>
+    <div class="msg" id="importMsg"></div>
+  </div>
+
+  <div class="card">
+    <h3>編輯既有項目</h3>
+    <div class="row" style="margin-bottom:8px;">
+      <select id="editCategorySelect"></select>
+    </div>
+    <div id="editItems" class="items-wrap"></div>
+  </div>
+</div>
+
+<div id="deleteModal" class="modal-overlay">
+  <div class="modal">
+    <div id="deleteText">確定要刪除嗎？</div>
+    <div class="modal-actions">
+      <button class="btn" id="cancelDeleteBtn">取消</button>
+      <button class="btn danger" id="confirmDeleteBtn">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const NUTRIENT_KEYS = ['saturatedFat', 'addedSugar', 'sodium', 'protein', 'solubleFiber', 'insolubleFiber', 'potassium', 'magnesium'];
+let consumablesData = {};
+let deleteContext = null;
+
+fetch('consumables.json')
+  .then(res => res.json())
+  .then(data => {
+    consumablesData = data;
+    refreshCategoryOptions();
+  })
+  .catch(() => showMessage('addMsg', '載入 consumables.json 失敗，請確認檔案存在於根目錄。', true));
+
+function showMessage(id, text, isError) {
+  const el = document.getElementById(id);
+  el.className = `msg ${isError ? 'error' : 'success'}`;
+  el.textContent = text;
+}
+
+function getNumericValue(id) {
+  return Number(document.getElementById(id).value || 0);
+}
+
+function buildItemFromInputs(prefix) {
+  return {
+    name: document.getElementById(`${prefix}Name`).value.trim(),
+    saturatedFat: getNumericValue(`${prefix}SaturatedFat`),
+    addedSugar: getNumericValue(`${prefix}AddedSugar`),
+    sodium: getNumericValue(`${prefix}Sodium`),
+    protein: getNumericValue(`${prefix}Protein`),
+    solubleFiber: getNumericValue(`${prefix}SolubleFiber`),
+    insolubleFiber: getNumericValue(`${prefix}InsolubleFiber`),
+    potassium: getNumericValue(`${prefix}Potassium`),
+    magnesium: getNumericValue(`${prefix}Magnesium`)
+  };
+}
+
+function hasConsumableName(name) {
+  const targetName = (name || '').trim();
+  if (!targetName) return false;
+  return Object.values(consumablesData).some(items =>
+    (items || []).some(item => item && item.name === targetName)
+  );
+}
+
+function refreshCategoryOptions() {
+  const select = document.getElementById('editCategorySelect');
+  const categories = Object.keys(consumablesData);
+  select.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+  renderEditableItems(select.value || categories[0]);
+}
+
+function renderEditableItems(category) {
+  const wrap = document.getElementById('editItems');
+  const items = consumablesData[category] || [];
+  if (!category) {
+    wrap.innerHTML = '<div>目前沒有分類，請先新增。</div>';
+    return;
+  }
+  if (items.length === 0) {
+    wrap.innerHTML = '<div>此分類目前沒有資料。</div>';
+    return;
+  }
+
+  wrap.innerHTML = '';
+  items.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+
+    const nameInput = `<div><label>名稱</label><input class="input" data-field="name" value="${item.name}" /></div>`;
+    const nutrientInputs = NUTRIENT_KEYS.map(key => {
+      const label = {
+        saturatedFat: '飽和脂肪', addedSugar: '添加糖', sodium: '鈉', protein: '蛋白質',
+        solubleFiber: '水溶性纖維', insolubleFiber: '非水溶性纖維', potassium: '鉀', magnesium: '鎂'
+      }[key];
+      return `<div><label>${label}</label><input class="input" type="number" step="0.1" data-field="${key}" value="${item[key] ?? 0}" /></div>`;
+    }).join('');
+
+    row.innerHTML = `
+      <div class="grid">${nameInput}${nutrientInputs}</div>
+      <div style="margin-top:8px;" class="row">
+        <button class="btn save-btn">儲存修改</button>
+        <button class="btn danger delete-btn">刪除</button>
+      </div>
+      <div class="msg"></div>
+    `;
+
+    row.querySelector('.save-btn').onclick = () => {
+      const updated = {};
+      row.querySelectorAll('[data-field]').forEach(input => {
+        const field = input.getAttribute('data-field');
+        updated[field] = field === 'name' ? input.value.trim() : Number(input.value || 0);
+      });
+      if (!updated.name) {
+        row.querySelector('.msg').textContent = '名稱不可空白。';
+        row.querySelector('.msg').className = 'msg error';
+        return;
+      }
+      consumablesData[category][idx] = updated;
+      row.querySelector('.msg').textContent = '已更新。';
+      row.querySelector('.msg').className = 'msg success';
+    };
+
+    row.querySelector('.delete-btn').onclick = () => openDeleteModal(category, idx, item.name);
+    wrap.appendChild(row);
+  });
+}
+
+function addManualItem() {
+  const category = document.getElementById('newCategory').value.trim();
+  const item = buildItemFromInputs('new');
+  if (!category) {
+    showMessage('addMsg', '請輸入分類。', true);
+    return;
+  }
+  if (!item.name) {
+    showMessage('addMsg', '請輸入名稱。', true);
+    return;
+  }
+  if (hasConsumableName(item.name)) {
+    showMessage('addMsg', `名稱「${item.name}」已存在，請使用其他名稱。`, true);
+    return;
+  }
+  if (!consumablesData[category]) consumablesData[category] = [];
+  consumablesData[category].push(item);
+  showMessage('addMsg', '新增成功。', false);
+  refreshCategoryOptions();
+  document.getElementById('editCategorySelect').value = category;
+  renderEditableItems(category);
+}
+
+function importByJson() {
+  const raw = document.getElementById('pasteJson').value.trim();
+  if (!raw) {
+    showMessage('importMsg', '請先貼上 JSON。', true);
+    return;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    let duplicateCount = 0;
+    let importedCount = 0;
+    Object.keys(parsed).forEach(category => {
+      if (!Array.isArray(parsed[category])) return;
+      if (!consumablesData[category]) consumablesData[category] = [];
+      parsed[category].forEach(item => {
+        if (!item || !item.name) return;
+        if (hasConsumableName(item.name)) {
+          duplicateCount += 1;
+          return;
+        }
+        const normalized = { name: item.name };
+        NUTRIENT_KEYS.forEach(key => {
+          normalized[key] = Number(item[key] || 0);
+        });
+        consumablesData[category].push(normalized);
+        importedCount += 1;
+      });
+    });
+    if (duplicateCount > 0) {
+      showMessage('importMsg', `JSON 匯入完成：新增 ${importedCount} 筆，略過 ${duplicateCount} 筆重複名稱。`, false);
+    } else {
+      showMessage('importMsg', `JSON 匯入成功：新增 ${importedCount} 筆。`, false);
+    }
+    refreshCategoryOptions();
+  } catch (err) {
+    showMessage('importMsg', `JSON 解析失敗：${err.message}`, true);
+  }
+}
+
+function downloadJson() {
+  const blob = new Blob([JSON.stringify(consumablesData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'consumables.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openDeleteModal(category, index, name) {
+  deleteContext = { category, index };
+  document.getElementById('deleteText').textContent = `確定要刪除「${name}」嗎？`;
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  deleteContext = null;
+  document.getElementById('deleteModal').classList.remove('open');
+}
+
+function confirmDelete() {
+  if (!deleteContext) return;
+  consumablesData[deleteContext.category].splice(deleteContext.index, 1);
+  if (consumablesData[deleteContext.category].length === 0) {
+    delete consumablesData[deleteContext.category];
+    refreshCategoryOptions();
+  } else {
+    renderEditableItems(deleteContext.category);
+  }
+  closeDeleteModal();
+}
+
+document.getElementById('addManualBtn').onclick = addManualItem;
+document.getElementById('importJsonBtn').onclick = importByJson;
+document.getElementById('downloadBtn').onclick = downloadJson;
+document.getElementById('editCategorySelect').onchange = e => renderEditableItems(e.target.value);
+document.getElementById('cancelDeleteBtn').onclick = closeDeleteModal;
+document.getElementById('confirmDeleteBtn').onclick = confirmDelete;
+</script>
+</body>
+</html>

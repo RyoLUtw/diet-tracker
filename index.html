@@ -34,6 +34,7 @@ body {
 
 .container {
   padding: 20px;
+  padding-bottom: 90px;
 }
 
 .meal-card,
@@ -124,6 +125,7 @@ body {
   transition: height 0.3s;
   height: 54px;
   overflow: hidden;
+  z-index: 5;
 }
 
 .floating.expanded {
@@ -146,6 +148,26 @@ body {
 .column {
   flex: 1;
   padding: 10px;
+}
+
+.editor-link-btn {
+  position: fixed;
+  right: 14px;
+  bottom: 66px;
+  z-index: 10;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: #333;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: bottom 0.3s;
+  text-decoration: none;
+}
+
+.editor-link-btn.up {
+  bottom: 332px;
 }
 
 .modal-overlay {
@@ -273,6 +295,8 @@ body {
   </div>
 </div>
 
+<a class="editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
+
 <div id="selectionModal" class="modal-overlay">
   <div class="modal">
     <div class="modal-banner">
@@ -315,7 +339,9 @@ function switchTab(tab, targetEl) {
 }
 
 function toggleFloating() {
-  document.getElementById("floating").classList.toggle("expanded");
+  const floating = document.getElementById("floating");
+  floating.classList.toggle("expanded");
+  document.getElementById('editorLinkBtn').classList.toggle('up', floating.classList.contains('expanded'));
 }
 
 function createMeals() {
