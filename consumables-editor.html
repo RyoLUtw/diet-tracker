@@ -41,6 +41,9 @@ h2, h3 { margin: 8px 0 12px; }
     <div class="grid">
       <div><label>分類</label><input class="input" id="newCategory" placeholder="例如：全穀雜糧類" /></div>
       <div><label>名稱</label><input class="input" id="newName" /></div>
+      <div><label>熱量</label><input class="input" type="number" step="0.1" id="newCalories" value="0" /></div>
+      <div><label>總脂肪</label><input class="input" type="number" step="0.1" id="newTotalFat" value="0" /></div>
+      <div><label>碳水化合物</label><input class="input" type="number" step="0.1" id="newCarbohydrates" value="0" /></div>
       <div><label>飽和脂肪</label><input class="input" type="number" step="0.1" id="newSaturatedFat" value="0" /></div>
       <div><label>添加糖</label><input class="input" type="number" step="0.1" id="newAddedSugar" value="0" /></div>
       <div><label>鈉</label><input class="input" type="number" step="0.1" id="newSodium" value="0" /></div>
@@ -81,7 +84,7 @@ h2, h3 { margin: 8px 0 12px; }
 </div>
 
 <script>
-const NUTRIENT_KEYS = ['saturatedFat', 'addedSugar', 'sodium', 'protein', 'solubleFiber', 'insolubleFiber', 'potassium', 'magnesium'];
+const NUTRIENT_KEYS = ['calories', 'totalFat', 'carbohydrates', 'saturatedFat', 'addedSugar', 'sodium', 'protein', 'solubleFiber', 'insolubleFiber', 'potassium', 'magnesium'];
 let consumablesData = {};
 let deleteContext = null;
 
@@ -106,6 +109,9 @@ function getNumericValue(id) {
 function buildItemFromInputs(prefix) {
   return {
     name: document.getElementById(`${prefix}Name`).value.trim(),
+    calories: getNumericValue(`${prefix}Calories`),
+    totalFat: getNumericValue(`${prefix}TotalFat`),
+    carbohydrates: getNumericValue(`${prefix}Carbohydrates`),
     saturatedFat: getNumericValue(`${prefix}SaturatedFat`),
     addedSugar: getNumericValue(`${prefix}AddedSugar`),
     sodium: getNumericValue(`${prefix}Sodium`),
@@ -152,6 +158,7 @@ function renderEditableItems(category) {
     const nameInput = `<div><label>名稱</label><input class="input" data-field="name" value="${item.name}" /></div>`;
     const nutrientInputs = NUTRIENT_KEYS.map(key => {
       const label = {
+        calories: '熱量', totalFat: '總脂肪', carbohydrates: '碳水化合物',
         saturatedFat: '飽和脂肪', addedSugar: '添加糖', sodium: '鈉', protein: '蛋白質',
         solubleFiber: '水溶性纖維', insolubleFiber: '非水溶性纖維', potassium: '鉀', magnesium: '鎂'
       }[key];
