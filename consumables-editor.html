@@ -117,6 +117,14 @@ function buildItemFromInputs(prefix) {
   };
 }
 
+function hasConsumableName(name) {
+  const targetName = (name || '').trim();
+  if (!targetName) return false;
+  return Object.values(consumablesData).some(items =>
+    (items || []).some(item => item && item.name === targetName)
+  );
+}
+
 function refreshCategoryOptions() {
   const select = document.getElementById('editCategorySelect');
   const categories = Object.keys(consumablesData);
@@ -191,6 +199,10 @@ function addManualItem() {
     showMessage('addMsg', '請輸入名稱。', true);
     return;
   }
+  if (hasConsumableName(item.name)) {
+    showMessage('addMsg', `名稱「${item.name}」已存在，請使用其他名稱。`, true);
+    return;
+  }
   if (!consumablesData[category]) consumablesData[category] = [];
   consumablesData[category].push(item);
   showMessage('addMsg', '新增成功。', false);
@@ -207,19 +219,30 @@ function importByJson() {
   }
   try {
     const parsed = JSON.parse(raw);
+    let duplicateCount = 0;
+    let importedCount = 0;
     Object.keys(parsed).forEach(category => {
       if (!Array.isArray(parsed[category])) return;
       if (!consumablesData[category]) consumablesData[category] = [];
       parsed[category].forEach(item => {
         if (!item || !item.name) return;
+        if (hasConsumableName(item.name)) {
+          duplicateCount += 1;
+          return;
+        }
         const normalized = { name: item.name };
         NUTRIENT_KEYS.forEach(key => {
           normalized[key] = Number(item[key] || 0);
         });
         consumablesData[category].push(normalized);
+        importedCount += 1;
       });
     });
-    showMessage('importMsg', 'JSON 匯入成功。', false);
+    if (duplicateCount > 0) {
+      showMessage('importMsg', `JSON 匯入完成：新增 ${importedCount} 筆，略過 ${duplicateCount} 筆重複名稱。`, false);
+    } else {
+      showMessage('importMsg', `JSON 匯入成功：新增 ${importedCount} 筆。`, false);
+    }
     refreshCategoryOptions();
   } catch (err) {
     showMessage('importMsg', `JSON 解析失敗：${err.message}`, true);
