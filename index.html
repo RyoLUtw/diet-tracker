@@ -2,8 +2,10 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>飲食紀錄</title>
 <style>
+* { box-sizing: border-box; }
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafafa; }
 .management-container { margin: 10px; border: 1px solid #ccc; border-radius: 12px; background: #fff; overflow: hidden; }
 .management-header { padding: 12px; font-weight: bold; background: #efefef; cursor: pointer; }
@@ -16,7 +18,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .tabs { display: flex; margin: 10px; gap: 10px; }
 .tab { flex: 1; padding: 10px; border-radius: 20px; text-align: center; border: 1px solid #ccc; cursor: pointer; background: #fff; }
 .tab.active { background: #333; color: white; }
-.container { padding: 20px; padding-bottom: 90px}
+.container { padding: 20px; padding-bottom: 90px; }
 .date-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
 .date-label { min-width: 160px; text-align: center; font-weight: bold; }
 .meal-card,.snack-card { border: 1px solid #ddd; border-radius: 14px; background: #fff; padding: 12px; margin-bottom: 12px; }
@@ -41,7 +43,14 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(760px, calc(100% - 20px)); max-height: calc(100% - 20px); background: #fff; border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
 .modal-banner { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #ddd; background: #f8f8f8; position: sticky; top: 0; }
 .modal-title { font-weight: bold; }
+.modal-actions-group { display: flex; gap: 8px; }
 .modal-body { padding: 10px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.sort-modal { width: min(520px, calc(100% - 20px)); }
+.sort-section-title { font-size: 14px; font-weight: bold; margin-bottom: 8px; }
+.sort-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.sort-option-btn { border: 1px solid #bbb; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.sort-option-btn.active { background: #333; color: #fff; border-color: #333; }
+.sort-divider { border: 0; border-top: 1px solid #ddd; margin: 12px 0; }
 .type-card { border: 1px solid #ddd; border-radius: 10px; padding: 8px; background: #fcfcfc; }
 .type-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .type-items { display: none; flex-wrap: wrap; gap: 6px; }
@@ -66,6 +75,101 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 
 .editor-link-btn.up {
   bottom: 332px;
+}
+
+@media (max-width: 768px) {
+  .tabs {
+    margin: 8px;
+    gap: 8px;
+  }
+
+  .container {
+    padding: 12px;
+    padding-bottom: 96px;
+  }
+
+  .date-nav {
+    flex-wrap: wrap;
+  }
+
+  .date-label {
+    width: 100%;
+    min-width: 0;
+    order: -1;
+  }
+
+  .consumable-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .qty-control {
+    justify-content: flex-end;
+  }
+
+  .total-grid {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .column {
+    padding: 8px 10px;
+  }
+
+  .floating.expanded {
+    height: min(78vh, 560px);
+  }
+
+  .editor-link-btn {
+    right: 10px;
+    bottom: 64px;
+    padding: 9px 12px;
+    font-size: 14px;
+  }
+
+  .editor-link-btn.up {
+    bottom: min(76vh, 520px);
+  }
+}
+
+@media (max-width: 480px) {
+  .management-container,
+  .tabs {
+    margin: 8px;
+  }
+
+  .management-body,
+  .management-header {
+    padding: 10px;
+  }
+
+  .tool-btn,
+  .date-btn,
+  .tab,
+  .select-btn,
+  .add-snack-btn,
+  .type-plus,
+  .modal-action,
+  .qty-btn {
+    font-size: 14px;
+  }
+
+  .modal {
+    width: calc(100% - 12px);
+    max-height: calc(100% - 12px);
+  }
+
+  .modal-actions-group {
+    gap: 6px;
+  }
+
+  .modal-body {
+    grid-template-columns: 1fr;
+  }
+
+  .qty-input {
+    width: 48px;
+  }
 }
 </style>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -142,9 +246,29 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     <div class="modal-banner">
       <button class="modal-action" onclick="closeModal()">取消</button>
       <div class="modal-title">選擇可食項目</div>
-      <button class="modal-action" onclick="confirmSelection()">選取</button>
+      <div class="modal-actions-group">
+        <button class="modal-action" onclick="openSortModal()">排序</button>
+        <button class="modal-action" onclick="confirmSelection()">選取</button>
+      </div>
     </div>
     <div id="modalBody" class="modal-body"></div>
+  </div>
+</div>
+
+<div id="sortModal" class="modal-overlay">
+  <div class="modal sort-modal">
+    <div class="modal-banner">
+      <button class="modal-action" onclick="closeSortModal()">取消</button>
+      <div class="modal-title">排序設定</div>
+      <button class="modal-action" onclick="applySortPreference()">套用</button>
+    </div>
+    <div class="modal-body" style="display:block;">
+      <div class="sort-section-title">排序欄位</div>
+      <div id="sortFieldOptions" class="sort-options"></div>
+      <hr class="sort-divider">
+      <div class="sort-section-title">排序方向</div>
+      <div id="sortDirectionOptions" class="sort-options"></div>
+    </div>
   </div>
 </div>
 
@@ -158,6 +282,21 @@ const GDRIVE_FILE_NAME = 'diet-tracker-backup.json';
 const GOOGLE_CLIENT_ID = '332987792434-u7r3hdl46asbqo0si3ngqu46kdbgf2at.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const nutrients = ['calories','totalFat','carbohydrates','saturatedFat','addedSugar','sodium','protein','solubleFiber','insolubleFiber','potassium','magnesium'];
+const sortFieldOptions = ['name', ...nutrients];
+const sortFieldLabels = {
+  name: '名稱',
+  calories: '熱量',
+  totalFat: '總脂肪',
+  carbohydrates: '碳水化合物',
+  saturatedFat: '飽和脂肪',
+  addedSugar: '添加糖',
+  sodium: '鈉',
+  protein: '蛋白質',
+  solubleFiber: '水溶性纖維',
+  insolubleFiber: '非水溶性纖維',
+  potassium: '鉀',
+  magnesium: '鎂'
+};
 const suggestedMinimums = { calories: 1200, carbohydrates: 130, protein: 60, sodium: 1500, totalFat: 44, solubleFiber: 6, insolubleFiber: 14, potassium: 3500, magnesium: 350 };
 
 let totals = { calories:0, totalFat:0, carbohydrates:0, saturatedFat:0, addedSugar:0, sodium:0, protein:0, solubleFiber:0, insolubleFiber:0, potassium:0, magnesium:0 };
@@ -165,6 +304,9 @@ let consumablesData = {};
 let modalTargetList = null;
 let selectedInModal = [];
 let currentDate = new Date();
+let selectionSortPreference = { field: 'name', direction: 'asc' };
+const nameSorterEn = new Intl.Collator('en', { sensitivity: 'base' });
+const nameSorterZh = new Intl.Collator('zh-Hant-TW', { sensitivity: 'base' });
 let storageState = { version: 1, days: {} };
 let googleTokenClient = null;
 let googleAccessToken = null;
@@ -313,10 +455,30 @@ function addSnackSection(items = []) {
   recalculateTotals();
 }
 
-function openSelectionModal(targetList) {
-  modalTargetList = targetList;
-  selectedInModal = [];
-  document.getElementById('modalBody').innerHTML = '';
+function isEnglishLeading(text = '') {
+  return /^[A-Za-z]/.test((text || '').trim());
+}
+
+function compareByName(a, b) {
+  const aName = (a?.name || '').trim();
+  const bName = (b?.name || '').trim();
+  const aIsEn = isEnglishLeading(aName);
+  const bIsEn = isEnglishLeading(bName);
+  if (aIsEn && bIsEn) return nameSorterEn.compare(aName, bName);
+  if (!aIsEn && !bIsEn) return nameSorterZh.compare(aName, bName);
+  return aIsEn ? -1 : 1;
+}
+
+function compareConsumables(a, b) {
+  const { field, direction } = selectionSortPreference;
+  const factor = direction === 'desc' ? -1 : 1;
+  if (field === 'name') return compareByName(a, b) * factor;
+  return ((Number(a?.[field]) || 0) - (Number(b?.[field]) || 0)) * factor;
+}
+
+function renderSelectionModalBody() {
+  const modalBody = document.getElementById('modalBody');
+  modalBody.innerHTML = '';
 
   Object.keys(consumablesData).forEach(typeName => {
     const card = document.createElement('div');
@@ -335,9 +497,11 @@ function openSelectionModal(targetList) {
       const isOpen = itemWrap.classList.toggle('open');
       plusBtn.innerText = isOpen ? '-' : '+';
       if (itemWrap.dataset.loaded === '1') return;
-      (consumablesData[typeName] || []).forEach(item => {
+      const sortedItems = [...(consumablesData[typeName] || [])].sort(compareConsumables);
+      sortedItems.forEach(item => {
         const chip = document.createElement('button');
-        chip.className = 'option-chip';
+        const isSelected = selectedInModal.some(sel => sel.name === item.name);
+        chip.className = `option-chip ${isSelected ? 'selected' : ''}`;
         chip.innerText = item.name;
         chip.onclick = () => {
           chip.classList.toggle('selected');
@@ -349,16 +513,71 @@ function openSelectionModal(targetList) {
       itemWrap.dataset.loaded = '1';
     };
 
-    header.appendChild(title); header.appendChild(plusBtn);
-    card.appendChild(header); card.appendChild(itemWrap);
-    document.getElementById('modalBody').appendChild(card);
+    header.appendChild(title);
+    header.appendChild(plusBtn);
+    card.appendChild(header);
+    card.appendChild(itemWrap);
+    modalBody.appendChild(card);
+  });
+}
+
+function renderSortControls() {
+  const fieldWrap = document.getElementById('sortFieldOptions');
+  const directionWrap = document.getElementById('sortDirectionOptions');
+  if (!fieldWrap || !directionWrap) return;
+
+  fieldWrap.innerHTML = '';
+  sortFieldOptions.forEach(field => {
+    const btn = document.createElement('button');
+    btn.className = `sort-option-btn ${selectionSortPreference.field === field ? 'active' : ''}`;
+    btn.innerText = sortFieldLabels[field] || field;
+    btn.onclick = () => {
+      selectionSortPreference.field = field;
+      renderSortControls();
+    };
+    fieldWrap.appendChild(btn);
   });
 
+  directionWrap.innerHTML = '';
+  [
+    { value: 'asc', label: '升冪（小到大 / A→Z）' },
+    { value: 'desc', label: '降冪（大到小 / Z→A）' }
+  ].forEach(({ value, label }) => {
+    const btn = document.createElement('button');
+    btn.className = `sort-option-btn ${selectionSortPreference.direction === value ? 'active' : ''}`;
+    btn.innerText = label;
+    btn.onclick = () => {
+      selectionSortPreference.direction = value;
+      renderSortControls();
+    };
+    directionWrap.appendChild(btn);
+  });
+}
+
+function openSortModal() {
+  renderSortControls();
+  document.getElementById('sortModal').classList.add('open');
+}
+
+function closeSortModal() {
+  document.getElementById('sortModal').classList.remove('open');
+}
+
+function applySortPreference() {
+  closeSortModal();
+  renderSelectionModalBody();
+}
+
+function openSelectionModal(targetList) {
+  modalTargetList = targetList;
+  selectedInModal = [];
+  renderSelectionModalBody();
   document.getElementById('selectionModal').classList.add('open');
 }
 
 function closeModal() {
   document.getElementById('selectionModal').classList.remove('open');
+  closeSortModal();
   selectedInModal = [];
 }
 

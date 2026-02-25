@@ -27,6 +27,20 @@ h2, h3 { margin: 8px 0 12px; }
 .modal-overlay.open { display: block; }
 .modal { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100% - 24px)); background: #fff; border-radius: 12px; padding: 16px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+
+@media (max-width: 768px) {
+  .page { padding: 12px; }
+  .header { align-items: flex-start; }
+  .header h2 { margin: 0; font-size: 22px; }
+  .grid { grid-template-columns: 1fr; }
+  .row > * { min-width: 0; }
+}
+
+@media (max-width: 480px) {
+  .btn { width: 100%; }
+  .modal-actions { flex-direction: column; }
+  .modal-actions .btn { width: 100%; }
+}
 </style>
 </head>
 <body>
