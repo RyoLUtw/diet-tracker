@@ -23,14 +23,16 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .category-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip-btn { border: 1px solid #bbb; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .chip-btn.active { background: #333; border-color: #333; color: #fff; }
-.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; max-height: 300px; background: #fff; }
-.table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1080px; width: 100%; }
+.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow-x: auto; overflow-y: auto; background: #fff; width: 100%; overscroll-behavior: contain; }
+.table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1080px; width: max-content; min-height: 100%; }
 .table-shell th,.table-shell td { padding: 8px; border-bottom: 1px solid #eee; border-right: 1px solid #f3f3f3; white-space: nowrap; background: #fff; }
 .table-shell thead th { position: sticky; top: 0; z-index: 3; background: #f8f8f8; font-weight: bold; }
-.table-shell .sticky-col { position: sticky; left: 0; z-index: 2; background: #fff; }
+.table-shell .sticky-col { position: sticky; left: 0; z-index: 2; background: #fff; box-shadow: 1px 0 0 #ececec; }
 .table-shell thead .sticky-col { z-index: 4; background: #f1f1f1; }
 .table-shell tbody tr.selected td { background: #e8f0ff; }
 .table-shell tbody tr:hover td { background: #f6f9ff; }
+.consumables-table-shell { height: min(34vh, 340px); }
+.meal-table-shell { height: min(36vh, 360px); }
 .sortable { cursor: pointer; user-select: none; }
 .action-row { display: flex; gap: 10px; }
 .table-actions-row { display: flex; gap: 10px; margin-top: 8px; }
@@ -101,8 +103,9 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     grid-template-columns: 1fr;
   }
 
-  .table-shell {
-    max-height: 260px;
+  .consumables-table-shell,
+  .meal-table-shell {
+    height: 260px;
   }
 
   .date-nav {
@@ -234,7 +237,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   <div class="my-menu-layout">
     <div id="categoryButtons" class="category-buttons"></div>
     <div>
-      <div class="table-shell">
+      <div class="table-shell consumables-table-shell">
         <table id="consumablesTable"></table>
       </div>
       <div class="table-actions-row">
@@ -246,7 +249,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     <div class="bottom-layout">
       <div id="customMealSelector" class="meal-selector"></div>
       <div>
-        <div class="table-shell">
+        <div class="table-shell meal-table-shell">
           <table id="mealContentTable"></table>
         </div>
         <div class="table-actions-row">
