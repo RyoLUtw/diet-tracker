@@ -20,11 +20,12 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .tab.active { background: #333; color: white; }
 .container { padding: 20px; padding-bottom: 90px; }
 .my-menu-layout { display: grid; grid-template-rows: auto minmax(220px, 1fr) auto minmax(240px, 1fr) auto; gap: 10px; }
+.my-menu-layout > div { min-width: 0; }
 .category-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip-btn { border: 1px solid #bbb; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .chip-btn.active { background: #333; border-color: #333; color: #fff; }
-.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; max-height: 300px; background: #fff; }
-.table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1080px; width: 100%; }
+.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; height: 320px; background: #fff; width: 100%; }
+.table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1400px; width: max-content; }
 .table-shell th,.table-shell td { padding: 8px; border-bottom: 1px solid #eee; border-right: 1px solid #f3f3f3; white-space: nowrap; background: #fff; }
 .table-shell thead th { position: sticky; top: 0; z-index: 3; background: #f8f8f8; font-weight: bold; }
 .table-shell .sticky-col { position: sticky; left: 0; z-index: 2; background: #fff; }
@@ -37,6 +38,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .action-btn { border: 1px solid #bbb; background: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .bottom-layout { display: grid; grid-template-columns: 280px 1fr; gap: 12px; align-items: start; }
+.bottom-layout > div { min-width: 0; }
 .meal-selector { border: 1px solid #ddd; border-radius: 10px; padding: 10px; max-height: 320px; overflow: auto; background: #fff; }
 .meal-type-block { border: 1px solid #e8e8e8; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
 .meal-type-header { width: 100%; text-align: left; border: none; background: #f4f4f4; padding: 8px 10px; cursor: pointer; font-weight: bold; }
@@ -102,7 +104,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   }
 
   .table-shell {
-    max-height: 260px;
+    height: 260px;
   }
 
   .date-nav {
