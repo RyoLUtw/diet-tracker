@@ -24,7 +24,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .category-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip-btn { border: 1px solid #bbb; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
 .chip-btn.active { background: #333; border-color: #333; color: #fff; }
-.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; height: 320px; background: #fff; width: 100%; }
+.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; max-height: 320px; background: #fff; width: 100%; }
 .table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1400px; width: max-content; }
 .table-shell th,.table-shell td { padding: 8px; border-bottom: 1px solid #eee; border-right: 1px solid #f3f3f3; white-space: nowrap; background: #fff; }
 .table-shell thead th { position: sticky; top: 0; z-index: 3; background: #f8f8f8; font-weight: bold; }
@@ -104,7 +104,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   }
 
   .table-shell {
-    height: 260px;
+    max-height: 260px;
   }
 
   .date-nav {
