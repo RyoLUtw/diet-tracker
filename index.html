@@ -33,6 +33,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .table-shell tbody tr:hover td { background: #f6f9ff; }
 .sortable { cursor: pointer; user-select: none; }
 .action-row { display: flex; gap: 10px; }
+.table-actions-row { display: flex; gap: 10px; margin-top: 8px; }
 .action-btn { border: 1px solid #bbb; background: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
 .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .bottom-layout { display: grid; grid-template-columns: 280px 1fr; gap: 12px; align-items: start; }
@@ -83,25 +84,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .type-items.open { display: flex; }
 .option-chip { border: 1px solid #bbb; border-radius: 20px; padding: 5px 10px; background: #fff; cursor: pointer; }
 .option-chip.selected { background: #333; color: #fff; border-color: #333; }
-.editor-link-btn {
-  position: fixed;
-  right: 14px;
-  bottom: 66px;
-  z-index: 10;
-  border: none;
-  border-radius: 999px;
-  padding: 10px 14px;
-  background: #333;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-  transition: bottom 0.3s;
-  text-decoration: none;
-}
-
-.editor-link-btn.up {
-  bottom: 332px;
-}
+.editor-link-btn { text-decoration: none; }
 
 @media (max-width: 768px) {
   .tabs {
@@ -154,16 +137,6 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     height: min(78vh, 560px);
   }
 
-  .editor-link-btn {
-    right: 10px;
-    bottom: 64px;
-    padding: 9px 12px;
-    font-size: 14px;
-  }
-
-  .editor-link-btn.up {
-    bottom: min(76vh, 520px);
-  }
 }
 
 @media (max-width: 480px) {
@@ -202,7 +175,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   }
 
   .my-menu-layout {
-    grid-template-rows: auto minmax(200px, 1fr) auto auto minmax(220px, 1fr) auto;
+    grid-template-rows: auto minmax(200px, 1fr) auto minmax(220px, 1fr) auto;
   }
 
   .qty-input {
@@ -235,6 +208,10 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     </div>
     <div id="lastBackupStatus" class="management-note">上次備份：尚無紀錄</div>
     <div class="management-note">Google 備份會寫入 Drive 的 appDataFolder（僅本 App 可見）。</div>
+    <hr style="width:100%; border:0; border-top:1px solid #ddd; margin:6px 0;">
+    <div class="management-row">
+      <a class="tool-btn editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
+    </div>
   </div>
 </div>
 
@@ -256,22 +233,28 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 <div id="myMenu" class="container tab-panel" data-tab="myMenu" style="display:none;">
   <div class="my-menu-layout">
     <div id="categoryButtons" class="category-buttons"></div>
-    <div class="table-shell">
-      <table id="consumablesTable"></table>
-    </div>
-    <div class="action-row">
-      <button id="addToMealBtn" class="action-btn" onclick="addSelectedConsumableToMeal()" disabled>新增到菜單</button>
-      <button id="removeFromMealBtn" class="action-btn" onclick="removeSelectedMealItem()" disabled>從菜單移除</button>
+    <div>
+      <div class="table-shell">
+        <table id="consumablesTable"></table>
+      </div>
+      <div class="table-actions-row">
+        <button id="addToMealBtn" class="action-btn" onclick="addSelectedConsumableToMeal()" disabled>新增到菜單</button>
+        <button id="quickUndoMealBtn" class="action-btn" onclick="undoMealChange()" disabled>復原</button>
+        <button id="quickRedoMealBtn" class="action-btn" onclick="redoMealChange()" disabled>重做</button>
+      </div>
     </div>
     <div class="bottom-layout">
       <div id="customMealSelector" class="meal-selector"></div>
-      <div class="table-shell">
-        <table id="mealContentTable"></table>
+      <div>
+        <div class="table-shell">
+          <table id="mealContentTable"></table>
+        </div>
+        <div class="table-actions-row">
+          <button id="removeFromMealBtn" class="action-btn" onclick="removeSelectedMealItem()" disabled>從菜單移除</button>
+          <button id="undoMealBtn" class="action-btn" onclick="undoMealChange()" disabled>復原</button>
+          <button id="redoMealBtn" class="action-btn" onclick="redoMealChange()" disabled>重做</button>
+        </div>
       </div>
-    </div>
-    <div class="undo-redo-row">
-      <button id="undoMealBtn" class="action-btn" onclick="undoMealChange()" disabled>復原</button>
-      <button id="redoMealBtn" class="action-btn" onclick="redoMealChange()" disabled>重做</button>
     </div>
   </div>
 </div>
@@ -301,7 +284,6 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   </div>
 </div>
 
-<a class="editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
 
 <div id="selectionModal" class="modal-overlay">
   <div class="modal">
@@ -386,8 +368,23 @@ let myMenuState = {
   redoStack: []
 };
 const mealTypes = ['早餐', '午餐', '晚餐', '點心'];
-const tableColumns = [
+const consumableTableColumns = [
   { key: 'name', label: '名稱' },
+  { key: 'calories', label: '熱量' },
+  { key: 'totalFat', label: '總脂肪' },
+  { key: 'carbohydrates', label: '碳水化合物' },
+  { key: 'saturatedFat', label: '飽和脂肪' },
+  { key: 'addedSugar', label: '添加糖' },
+  { key: 'sodium', label: '鈉' },
+  { key: 'protein', label: '蛋白質' },
+  { key: 'solubleFiber', label: '水溶性纖維' },
+  { key: 'insolubleFiber', label: '非水溶性纖維' },
+  { key: 'potassium', label: '鉀' },
+  { key: 'magnesium', label: '鎂' }
+];
+const mealTableColumns = [
+  { key: 'name', label: '名稱' },
+  { key: 'amount', label: '份量' },
   { key: 'calories', label: '熱量' },
   { key: 'totalFat', label: '總脂肪' },
   { key: 'carbohydrates', label: '碳水化合物' },
@@ -478,13 +475,16 @@ function switchTab(tab, targetEl) {
   });
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
   targetEl.classList.add('active');
+  const floating = document.getElementById('floating');
+  if (floating) {
+    floating.style.display = tab === 'daily' ? 'block' : 'none';
+  }
 }
 
 
 function toggleFloating() {
   const floating = document.getElementById("floating");
   floating.classList.toggle("expanded");
-  document.getElementById('editorLinkBtn').classList.toggle('up', floating.classList.contains('expanded'));
 }
 
 function createMeals() {
@@ -939,13 +939,20 @@ function sortRows(rows) {
   return sorted;
 }
 
+function formatTableValue(colKey, value) {
+  if (colKey === 'name') return value || '';
+  if (colKey === 'amount') return String(Number(value || 1));
+  return Number(value || 0).toFixed(colKey === 'calories' || colKey === 'sodium' || colKey === 'potassium' || colKey === 'magnesium' ? 0 : 1);
+}
+
 function renderTable(el, tableName, rows, selectedName, onRowSelect) {
   const table = el;
   const sorted = sortRows(rows);
+  const columns = tableName === 'meal' ? mealTableColumns : consumableTableColumns;
   table.innerHTML = '';
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  tableColumns.forEach((col, i) => {
+  columns.forEach((col, i) => {
     const th = document.createElement('th');
     if (i === 0) th.classList.add('sticky-col');
     th.classList.add('sortable');
@@ -961,11 +968,39 @@ function renderTable(el, tableName, rows, selectedName, onRowSelect) {
     const tr = document.createElement('tr');
     if (rowData.name === selectedName) tr.classList.add('selected');
     tr.onclick = () => onRowSelect(rowData.name);
-    tableColumns.forEach((col, i) => {
+
+    columns.forEach((col, i) => {
       const td = document.createElement('td');
       if (i === 0) td.classList.add('sticky-col');
-      const value = rowData[col.key];
-      td.innerText = col.key === 'name' ? (value || '') : (Number(value || 0).toFixed(col.key === 'calories' || col.key === 'sodium' || col.key === 'potassium' || col.key === 'magnesium' ? 0 : 1));
+
+      if (tableName === 'meal' && col.key === 'amount') {
+        const amountWrap = document.createElement('div');
+        amountWrap.style.display = 'inline-flex';
+        amountWrap.style.alignItems = 'center';
+        amountWrap.style.gap = '6px';
+        const minus = document.createElement('button');
+        minus.className = 'qty-btn';
+        minus.innerText = '-';
+        minus.onclick = (e) => {
+          e.stopPropagation();
+          updateMealItemAmount(rowData.name, -1);
+        };
+        const amount = document.createElement('span');
+        amount.innerText = String(Number(rowData.amount || 1));
+        const plus = document.createElement('button');
+        plus.className = 'qty-btn';
+        plus.innerText = '+';
+        plus.onclick = (e) => {
+          e.stopPropagation();
+          updateMealItemAmount(rowData.name, 1);
+        };
+        amountWrap.appendChild(minus);
+        amountWrap.appendChild(amount);
+        amountWrap.appendChild(plus);
+        td.appendChild(amountWrap);
+      } else {
+        td.innerText = formatTableValue(col.key, rowData[col.key]);
+      }
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
@@ -974,6 +1009,7 @@ function renderTable(el, tableName, rows, selectedName, onRowSelect) {
 }
 
 function renderConsumablesTable() {
+
   const table = document.getElementById('consumablesTable');
   if (!table) return;
   const rows = consumablesData[myMenuState.selectedCategory] || [];
@@ -1053,12 +1089,38 @@ function renderMealContentTable() {
   const table = document.getElementById('mealContentTable');
   if (!table) return;
   const meal = getSelectedMeal();
-  const rows = meal ? meal.items : [];
+  const rows = meal ? meal.items.map(item => ({
+    ...item,
+    amount: Number(item.amount || 1),
+    calories: Number(item.calories || 0) * Number(item.amount || 1),
+    totalFat: Number(item.totalFat || 0) * Number(item.amount || 1),
+    carbohydrates: Number(item.carbohydrates || 0) * Number(item.amount || 1),
+    saturatedFat: Number(item.saturatedFat || 0) * Number(item.amount || 1),
+    addedSugar: Number(item.addedSugar || 0) * Number(item.amount || 1),
+    sodium: Number(item.sodium || 0) * Number(item.amount || 1),
+    protein: Number(item.protein || 0) * Number(item.amount || 1),
+    solubleFiber: Number(item.solubleFiber || 0) * Number(item.amount || 1),
+    insolubleFiber: Number(item.insolubleFiber || 0) * Number(item.amount || 1),
+    potassium: Number(item.potassium || 0) * Number(item.amount || 1),
+    magnesium: Number(item.magnesium || 0) * Number(item.amount || 1)
+  })) : [];
   renderTable(table, 'meal', rows, myMenuState.selectedMealRowName, (name) => {
     myMenuState.selectedMealRowName = name;
     syncMealButtons();
     renderMealContentTable();
   });
+}
+
+function updateMealItemAmount(itemName, delta) {
+  const meal = getSelectedMeal();
+  if (!meal) return;
+  const target = meal.items.find(item => item.name === itemName);
+  if (!target) return;
+  pushMealHistory();
+  target.amount = Math.max(1, Number(target.amount || 1) + delta);
+  myMenuState.selectedMealRowName = itemName;
+  renderMealContentTable();
+  syncMealButtons();
 }
 
 function pushMealHistory() {
@@ -1074,11 +1136,15 @@ function syncMealButtons() {
   const rmBtn = document.getElementById('removeFromMealBtn');
   const undoBtn = document.getElementById('undoMealBtn');
   const redoBtn = document.getElementById('redoMealBtn');
+  const quickUndoBtn = document.getElementById('quickUndoMealBtn');
+  const quickRedoBtn = document.getElementById('quickRedoMealBtn');
   const hasMeal = Boolean(getSelectedMeal());
   if (addBtn) addBtn.disabled = !(myMenuState.selectedConsumableName && hasMeal);
   if (rmBtn) rmBtn.disabled = !(myMenuState.selectedMealRowName && hasMeal);
   if (undoBtn) undoBtn.disabled = myMenuState.undoStack.length === 0;
   if (redoBtn) redoBtn.disabled = myMenuState.redoStack.length === 0;
+  if (quickUndoBtn) quickUndoBtn.disabled = myMenuState.undoStack.length === 0;
+  if (quickRedoBtn) quickRedoBtn.disabled = myMenuState.redoStack.length === 0;
 }
 
 function addSelectedConsumableToMeal() {
@@ -1088,7 +1154,7 @@ function addSelectedConsumableToMeal() {
   if (!source) return;
   pushMealHistory();
   const exists = meal.items.find(item => item.name === source.name);
-  if (!exists) meal.items.push({ ...source });
+  if (!exists) meal.items.push({ ...source, amount: 1 });
   myMenuState.selectedMealRowName = source.name;
   renderMealContentTable();
   syncMealButtons();
