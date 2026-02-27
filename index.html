@@ -1079,6 +1079,7 @@ function renderCustomMealSelector() {
 function addMeal(type) {
   const name = prompt(`請輸入${type}菜單名稱`);
   if (!name) return;
+  pushMealHistory();
   const id = `${safeMealKey(type)}-${Date.now()}`;
   myMenuState.mealsByType[type].push({ id, name: name.trim(), items: [] });
   myMenuState.selectedMealType = type;
