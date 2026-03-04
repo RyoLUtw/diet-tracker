@@ -19,6 +19,35 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .tab { flex: 1; padding: 10px; border-radius: 20px; text-align: center; border: 1px solid #ccc; cursor: pointer; background: #fff; }
 .tab.active { background: #333; color: white; }
 .container { padding: 20px; padding-bottom: 90px; }
+.my-menu-layout { display: grid; grid-template-rows: auto minmax(220px, 1fr) auto minmax(240px, 1fr) auto; gap: 10px; }
+.my-menu-layout > div { min-width: 0; }
+.category-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-btn { border: 1px solid #bbb; background: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.chip-btn.active { background: #333; border-color: #333; color: #fff; }
+.table-shell { border: 1px solid #ddd; border-radius: 10px; overflow: auto; max-height: 320px; background: #fff; width: 100%; }
+.table-shell table { border-collapse: separate; border-spacing: 0; min-width: 1400px; width: max-content; }
+.table-shell th,.table-shell td { padding: 8px; border-bottom: 1px solid #eee; border-right: 1px solid #f3f3f3; white-space: nowrap; background: #fff; }
+.table-shell thead th { position: sticky; top: 0; z-index: 3; background: #f8f8f8; font-weight: bold; }
+.table-shell .sticky-col { position: sticky; left: 0; z-index: 2; background: #fff; }
+.table-shell thead .sticky-col { z-index: 4; background: #f1f1f1; }
+.table-shell tbody tr.selected td { background: #e8f0ff; }
+.table-shell tbody tr:hover td { background: #f6f9ff; }
+.sortable { cursor: pointer; user-select: none; }
+.action-row { display: flex; gap: 10px; }
+.table-actions-row { display: flex; gap: 10px; margin-top: 8px; }
+.action-btn { border: 1px solid #bbb; background: #fff; border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+.action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.bottom-layout { display: grid; grid-template-columns: 280px 1fr; gap: 12px; align-items: start; }
+.bottom-layout > div { min-width: 0; }
+.meal-selector { border: 1px solid #ddd; border-radius: 10px; padding: 10px; max-height: 320px; overflow: auto; background: #fff; }
+.meal-type-block { border: 1px solid #e8e8e8; border-radius: 8px; margin-bottom: 8px; overflow: hidden; }
+.meal-type-header { width: 100%; text-align: left; border: none; background: #f4f4f4; padding: 8px 10px; cursor: pointer; font-weight: bold; }
+.meal-type-content { display: none; padding: 8px; }
+.meal-type-content.open { display: block; }
+.meal-add-btn { width: 100%; margin-bottom: 8px; border: 1px dashed #888; background: #fff; border-radius: 8px; padding: 6px 8px; cursor: pointer; }
+.meal-item-btn { display: block; width: 100%; text-align: left; border: 1px solid #ddd; background: #fff; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; cursor: pointer; }
+.meal-item-btn.active { border-color: #333; background: #f0f0f0; }
+.undo-redo-row { display: flex; gap: 10px; }
 .date-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
 .date-label { min-width: 160px; text-align: center; font-weight: bold; }
 .meal-card,.snack-card { border: 1px solid #ddd; border-radius: 14px; background: #fff; padding: 12px; margin-bottom: 12px; }
@@ -57,25 +86,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .type-items.open { display: flex; }
 .option-chip { border: 1px solid #bbb; border-radius: 20px; padding: 5px 10px; background: #fff; cursor: pointer; }
 .option-chip.selected { background: #333; color: #fff; border-color: #333; }
-.editor-link-btn {
-  position: fixed;
-  right: 14px;
-  bottom: 66px;
-  z-index: 10;
-  border: none;
-  border-radius: 999px;
-  padding: 10px 14px;
-  background: #333;
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-  transition: bottom 0.3s;
-  text-decoration: none;
-}
-
-.editor-link-btn.up {
-  bottom: 332px;
-}
+.editor-link-btn { text-decoration: none; }
 
 @media (max-width: 768px) {
   .tabs {
@@ -86,6 +97,14 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   .container {
     padding: 12px;
     padding-bottom: 96px;
+  }
+
+  .bottom-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .table-shell {
+    max-height: 260px;
   }
 
   .date-nav {
@@ -120,16 +139,6 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     height: min(78vh, 560px);
   }
 
-  .editor-link-btn {
-    right: 10px;
-    bottom: 64px;
-    padding: 9px 12px;
-    font-size: 14px;
-  }
-
-  .editor-link-btn.up {
-    bottom: min(76vh, 520px);
-  }
 }
 
 @media (max-width: 480px) {
@@ -167,6 +176,10 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     grid-template-columns: 1fr;
   }
 
+  .my-menu-layout {
+    grid-template-rows: auto minmax(200px, 1fr) auto minmax(220px, 1fr) auto;
+  }
+
   .qty-input {
     width: 48px;
   }
@@ -197,15 +210,20 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     </div>
     <div id="lastBackupStatus" class="management-note">上次備份：尚無紀錄</div>
     <div class="management-note">Google 備份會寫入 Drive 的 appDataFolder（僅本 App 可見）。</div>
+    <hr style="width:100%; border:0; border-top:1px solid #ddd; margin:6px 0;">
+    <div class="management-row">
+      <a class="tool-btn editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
+    </div>
   </div>
 </div>
 
 <div class="tabs">
   <div class="tab active" onclick="switchTab('daily', this)">每日</div>
+  <div class="tab" onclick="switchTab('myMenu', this)">我的菜單</div>
   <div class="tab" onclick="switchTab('review', this)">回顧</div>
 </div>
 
-<div id="daily" class="container">
+<div id="daily" class="container tab-panel" data-tab="daily">
   <div class="date-nav">
     <button class="date-btn" onclick="shiftDate(-1)">◀ 前一天</button>
     <div id="dateLabel" class="date-label"></div>
@@ -214,7 +232,36 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   <div id="mealContainer"></div>
 </div>
 
-<div id="review" class="container" style="display:none;">回顧頁籤即將推出。</div>
+<div id="myMenu" class="container tab-panel" data-tab="myMenu" style="display:none;">
+  <div class="my-menu-layout">
+    <div id="categoryButtons" class="category-buttons"></div>
+    <div>
+      <div class="table-shell">
+        <table id="consumablesTable"></table>
+      </div>
+      <div class="table-actions-row">
+        <button id="addToMealBtn" class="action-btn" onclick="addSelectedConsumableToMeal()" disabled>新增到菜單</button>
+        <button id="quickUndoMealBtn" class="action-btn" onclick="undoMealChange()" disabled>復原</button>
+        <button id="quickRedoMealBtn" class="action-btn" onclick="redoMealChange()" disabled>重做</button>
+      </div>
+    </div>
+    <div class="bottom-layout">
+      <div id="customMealSelector" class="meal-selector"></div>
+      <div>
+        <div class="table-shell">
+          <table id="mealContentTable"></table>
+        </div>
+        <div class="table-actions-row">
+          <button id="removeFromMealBtn" class="action-btn" onclick="removeSelectedMealItem()" disabled>從菜單移除</button>
+          <button id="undoMealBtn" class="action-btn" onclick="undoMealChange()" disabled>復原</button>
+          <button id="redoMealBtn" class="action-btn" onclick="redoMealChange()" disabled>重做</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="review" class="container tab-panel" data-tab="review" style="display:none;">回顧頁籤即將推出。</div>
 
 <div class="floating" id="floating">
   <div class="floating-header" onclick="toggleFloating()">每日總攝取量</div>
@@ -239,7 +286,6 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   </div>
 </div>
 
-<a class="editor-link-btn" id="editorLinkBtn" href="consumables-editor.html">編輯可食項目</a>
 
 <div id="selectionModal" class="modal-overlay">
   <div class="modal">
@@ -312,6 +358,49 @@ let googleTokenClient = null;
 let googleAccessToken = null;
 
 
+let myMenuState = {
+  selectedCategory: '',
+  sort: { table: 'consumables', field: 'name', direction: 'asc' },
+  selectedConsumableName: '',
+  selectedMealRowName: '',
+  selectedMealType: '早餐',
+  selectedMealId: '',
+  mealsByType: { 早餐: [], 午餐: [], 晚餐: [], 點心: [] },
+  undoStack: [],
+  redoStack: []
+};
+const mealTypes = ['早餐', '午餐', '晚餐', '點心'];
+const consumableTableColumns = [
+  { key: 'name', label: '名稱' },
+  { key: 'calories', label: '熱量' },
+  { key: 'totalFat', label: '總脂肪' },
+  { key: 'carbohydrates', label: '碳水化合物' },
+  { key: 'saturatedFat', label: '飽和脂肪' },
+  { key: 'addedSugar', label: '添加糖' },
+  { key: 'sodium', label: '鈉' },
+  { key: 'protein', label: '蛋白質' },
+  { key: 'solubleFiber', label: '水溶性纖維' },
+  { key: 'insolubleFiber', label: '非水溶性纖維' },
+  { key: 'potassium', label: '鉀' },
+  { key: 'magnesium', label: '鎂' }
+];
+const mealTableColumns = [
+  { key: 'name', label: '名稱' },
+  { key: 'amount', label: '份量' },
+  { key: 'calories', label: '熱量' },
+  { key: 'totalFat', label: '總脂肪' },
+  { key: 'carbohydrates', label: '碳水化合物' },
+  { key: 'saturatedFat', label: '飽和脂肪' },
+  { key: 'addedSugar', label: '添加糖' },
+  { key: 'sodium', label: '鈉' },
+  { key: 'protein', label: '蛋白質' },
+  { key: 'solubleFiber', label: '水溶性纖維' },
+  { key: 'insolubleFiber', label: '非水溶性纖維' },
+  { key: 'potassium', label: '鉀' },
+  { key: 'magnesium', label: '鎂' }
+];
+
+
 function updateGoogleUiState(isSignedIn, statusText) {
   const loginBtn = document.getElementById('googleLoginBtn');
   const logoutBtn = document.getElementById('googleLogoutBtn');
@@ -372,6 +461,7 @@ function initializeApp() {
   refreshLastBackupStatus();
   maybeAutoBackup();
   setCurrentDate(currentDate);
+  initializeMyMenu();
 }
 
 function toggleManagement() {
@@ -382,16 +472,21 @@ function toggleManagement() {
 }
 
 function switchTab(tab, targetEl) {
-  document.getElementById('daily').style.display = tab === 'daily' ? 'block' : 'none';
-  document.getElementById('review').style.display = tab === 'review' ? 'block' : 'none';
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.style.display = panel.dataset.tab === tab ? 'block' : 'none';
+  });
   document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
   targetEl.classList.add('active');
+  const floating = document.getElementById('floating');
+  if (floating) {
+    floating.style.display = tab === 'daily' ? 'block' : 'none';
+  }
 }
+
 
 function toggleFloating() {
   const floating = document.getElementById("floating");
   floating.classList.toggle("expanded");
-  document.getElementById('editorLinkBtn').classList.toggle('up', floating.classList.contains('expanded'));
 }
 
 function createMeals() {
@@ -767,6 +862,335 @@ function wipeAllData() {
   storageState = { version: 1, days: {} };
   persistState();
   renderCurrentDay();
+}
+
+
+function safeMealKey(label) {
+  return label.replace(/[^\w一-鿿]/g, '_');
+}
+
+function initializeMyMenu() {
+  const categories = Object.keys(consumablesData);
+  if (!categories.length) return;
+  myMenuState.selectedCategory = myMenuState.selectedCategory || categories[0];
+  mealTypes.forEach(type => {
+    if (!Array.isArray(myMenuState.mealsByType[type])) myMenuState.mealsByType[type] = [];
+    if (myMenuState.mealsByType[type].length === 0) {
+      const id = `${safeMealKey(type)}-default`;
+      myMenuState.mealsByType[type].push({ id, name: `${type}菜單1`, items: [] });
+      if (!myMenuState.selectedMealId) {
+        myMenuState.selectedMealType = type;
+        myMenuState.selectedMealId = id;
+      }
+    }
+  });
+  if (!myMenuState.selectedMealId) {
+    myMenuState.selectedMealType = '早餐';
+    myMenuState.selectedMealId = myMenuState.mealsByType['早餐'][0].id;
+  }
+  renderMyMenu();
+}
+
+function renderMyMenu() {
+  renderCategoryButtons();
+  renderConsumablesTable();
+  renderCustomMealSelector();
+  renderMealContentTable();
+  syncMealButtons();
+}
+
+function renderCategoryButtons() {
+  const wrap = document.getElementById('categoryButtons');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  Object.keys(consumablesData).forEach(category => {
+    const btn = document.createElement('button');
+    btn.className = `chip-btn ${myMenuState.selectedCategory === category ? 'active' : ''}`;
+    btn.innerText = category;
+    btn.onclick = () => {
+      myMenuState.selectedCategory = category;
+      myMenuState.selectedConsumableName = '';
+      renderMyMenu();
+    };
+    wrap.appendChild(btn);
+  });
+}
+
+function getSortArrow(tableName, key) {
+  if (myMenuState.sort.table !== tableName || myMenuState.sort.field !== key) return '';
+  return myMenuState.sort.direction === 'asc' ? ' ↑' : ' ↓';
+}
+
+function toggleTableSort(tableName, field) {
+  if (myMenuState.sort.table === tableName && myMenuState.sort.field === field) {
+    myMenuState.sort.direction = myMenuState.sort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    myMenuState.sort = { table: tableName, field, direction: 'asc' };
+  }
+  if (tableName === 'consumables') renderConsumablesTable();
+  else renderMealContentTable();
+}
+
+function sortRows(rows) {
+  const { field, direction } = myMenuState.sort;
+  const factor = direction === 'asc' ? 1 : -1;
+  const sorted = [...rows].sort((a, b) => {
+    if (field === 'name') return compareByName(a, b) * factor;
+    return ((Number(a?.[field]) || 0) - (Number(b?.[field]) || 0)) * factor;
+  });
+  return sorted;
+}
+
+function formatTableValue(colKey, value) {
+  if (colKey === 'name') return value || '';
+  if (colKey === 'amount') return String(Number(value || 1));
+  return Number(value || 0).toFixed(colKey === 'calories' || colKey === 'sodium' || colKey === 'potassium' || colKey === 'magnesium' ? 0 : 1);
+}
+
+function renderTable(el, tableName, rows, selectedName, onRowSelect) {
+  const table = el;
+  const sorted = sortRows(rows);
+  const columns = tableName === 'meal' ? mealTableColumns : consumableTableColumns;
+  table.innerHTML = '';
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  columns.forEach((col, i) => {
+    const th = document.createElement('th');
+    if (i === 0) th.classList.add('sticky-col');
+    th.classList.add('sortable');
+    th.innerText = `${col.label}${getSortArrow(tableName, col.key)}`;
+    th.onclick = () => toggleTableSort(tableName, col.key);
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  sorted.forEach(rowData => {
+    const tr = document.createElement('tr');
+    if (rowData.name === selectedName) tr.classList.add('selected');
+    tr.onclick = () => onRowSelect(rowData.name);
+
+    columns.forEach((col, i) => {
+      const td = document.createElement('td');
+      if (i === 0) td.classList.add('sticky-col');
+
+      if (tableName === 'meal' && col.key === 'amount') {
+        const amountWrap = document.createElement('div');
+        amountWrap.style.display = 'inline-flex';
+        amountWrap.style.alignItems = 'center';
+        amountWrap.style.gap = '6px';
+        const minus = document.createElement('button');
+        minus.className = 'qty-btn';
+        minus.innerText = '-';
+        minus.onclick = (e) => {
+          e.stopPropagation();
+          updateMealItemAmount(rowData.name, -1);
+        };
+        const amount = document.createElement('span');
+        amount.innerText = String(Number(rowData.amount || 1));
+        const plus = document.createElement('button');
+        plus.className = 'qty-btn';
+        plus.innerText = '+';
+        plus.onclick = (e) => {
+          e.stopPropagation();
+          updateMealItemAmount(rowData.name, 1);
+        };
+        amountWrap.appendChild(minus);
+        amountWrap.appendChild(amount);
+        amountWrap.appendChild(plus);
+        td.appendChild(amountWrap);
+      } else {
+        td.innerText = formatTableValue(col.key, rowData[col.key]);
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+}
+
+function renderConsumablesTable() {
+
+  const table = document.getElementById('consumablesTable');
+  if (!table) return;
+  const rows = consumablesData[myMenuState.selectedCategory] || [];
+  renderTable(table, 'consumables', rows, myMenuState.selectedConsumableName, (name) => {
+    myMenuState.selectedConsumableName = name;
+    syncMealButtons();
+    renderConsumablesTable();
+  });
+}
+
+function getSelectedMeal() {
+  const arr = myMenuState.mealsByType[myMenuState.selectedMealType] || [];
+  return arr.find(m => m.id === myMenuState.selectedMealId) || null;
+}
+
+function renderCustomMealSelector() {
+  const wrap = document.getElementById('customMealSelector');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  mealTypes.forEach(type => {
+    const block = document.createElement('div');
+    block.className = 'meal-type-block';
+    const header = document.createElement('button');
+    header.className = 'meal-type-header';
+    const isOpen = myMenuState.selectedMealType === type;
+    header.innerText = `${type} ${isOpen ? '▲' : '▼'}`;
+
+    const content = document.createElement('div');
+    content.className = `meal-type-content ${isOpen ? 'open' : ''}`;
+    const addBtn = document.createElement('button');
+    addBtn.className = 'meal-add-btn';
+    addBtn.innerText = '+ 新增菜單';
+    addBtn.onclick = () => addMeal(type);
+    content.appendChild(addBtn);
+
+    const sortedMeals = [...(myMenuState.mealsByType[type] || [])].sort((a, b) => compareByName({ name: a.name }, { name: b.name }));
+    sortedMeals.forEach(meal => {
+      const btn = document.createElement('button');
+      btn.className = `meal-item-btn ${meal.id === myMenuState.selectedMealId ? 'active' : ''}`;
+      btn.innerText = meal.name;
+      btn.onclick = () => {
+        myMenuState.selectedMealType = type;
+        myMenuState.selectedMealId = meal.id;
+        myMenuState.selectedMealRowName = '';
+        renderMyMenu();
+      };
+      content.appendChild(btn);
+    });
+
+    header.onclick = () => {
+      myMenuState.selectedMealType = (myMenuState.selectedMealType === type) ? '' : type;
+      if (myMenuState.selectedMealType === type && !(myMenuState.selectedMealId && (myMenuState.mealsByType[type] || []).some(m => m.id === myMenuState.selectedMealId))) {
+        myMenuState.selectedMealId = (myMenuState.mealsByType[type] || [])[0]?.id || '';
+      }
+      renderMyMenu();
+    };
+
+    block.appendChild(header);
+    block.appendChild(content);
+    wrap.appendChild(block);
+  });
+}
+
+function addMeal(type) {
+  const name = prompt(`請輸入${type}菜單名稱`);
+  if (!name) return;
+  pushMealHistory();
+  const id = `${safeMealKey(type)}-${Date.now()}`;
+  myMenuState.mealsByType[type].push({ id, name: name.trim(), items: [] });
+  myMenuState.selectedMealType = type;
+  myMenuState.selectedMealId = id;
+  myMenuState.selectedMealRowName = '';
+  renderMyMenu();
+}
+
+function renderMealContentTable() {
+  const table = document.getElementById('mealContentTable');
+  if (!table) return;
+  const meal = getSelectedMeal();
+  const rows = meal ? meal.items.map(item => ({
+    ...item,
+    amount: Number(item.amount || 1),
+    calories: Number(item.calories || 0) * Number(item.amount || 1),
+    totalFat: Number(item.totalFat || 0) * Number(item.amount || 1),
+    carbohydrates: Number(item.carbohydrates || 0) * Number(item.amount || 1),
+    saturatedFat: Number(item.saturatedFat || 0) * Number(item.amount || 1),
+    addedSugar: Number(item.addedSugar || 0) * Number(item.amount || 1),
+    sodium: Number(item.sodium || 0) * Number(item.amount || 1),
+    protein: Number(item.protein || 0) * Number(item.amount || 1),
+    solubleFiber: Number(item.solubleFiber || 0) * Number(item.amount || 1),
+    insolubleFiber: Number(item.insolubleFiber || 0) * Number(item.amount || 1),
+    potassium: Number(item.potassium || 0) * Number(item.amount || 1),
+    magnesium: Number(item.magnesium || 0) * Number(item.amount || 1)
+  })) : [];
+  renderTable(table, 'meal', rows, myMenuState.selectedMealRowName, (name) => {
+    myMenuState.selectedMealRowName = name;
+    syncMealButtons();
+    renderMealContentTable();
+  });
+}
+
+function updateMealItemAmount(itemName, delta) {
+  const meal = getSelectedMeal();
+  if (!meal) return;
+  const target = meal.items.find(item => item.name === itemName);
+  if (!target) return;
+  pushMealHistory();
+  target.amount = Math.max(1, Number(target.amount || 1) + delta);
+  myMenuState.selectedMealRowName = itemName;
+  renderMealContentTable();
+  syncMealButtons();
+}
+
+function pushMealHistory() {
+  const snapshot = JSON.stringify(myMenuState.mealsByType);
+  myMenuState.undoStack.push(snapshot);
+  if (myMenuState.undoStack.length > 100) myMenuState.undoStack.shift();
+  myMenuState.redoStack = [];
+  syncMealButtons();
+}
+
+function syncMealButtons() {
+  const addBtn = document.getElementById('addToMealBtn');
+  const rmBtn = document.getElementById('removeFromMealBtn');
+  const undoBtn = document.getElementById('undoMealBtn');
+  const redoBtn = document.getElementById('redoMealBtn');
+  const quickUndoBtn = document.getElementById('quickUndoMealBtn');
+  const quickRedoBtn = document.getElementById('quickRedoMealBtn');
+  const hasMeal = Boolean(getSelectedMeal());
+  if (addBtn) addBtn.disabled = !(myMenuState.selectedConsumableName && hasMeal);
+  if (rmBtn) rmBtn.disabled = !(myMenuState.selectedMealRowName && hasMeal);
+  if (undoBtn) undoBtn.disabled = myMenuState.undoStack.length === 0;
+  if (redoBtn) redoBtn.disabled = myMenuState.redoStack.length === 0;
+  if (quickUndoBtn) quickUndoBtn.disabled = myMenuState.undoStack.length === 0;
+  if (quickRedoBtn) quickRedoBtn.disabled = myMenuState.redoStack.length === 0;
+}
+
+function addSelectedConsumableToMeal() {
+  const meal = getSelectedMeal();
+  if (!meal || !myMenuState.selectedConsumableName) return;
+  const source = (consumablesData[myMenuState.selectedCategory] || []).find(item => item.name === myMenuState.selectedConsumableName);
+  if (!source) return;
+  pushMealHistory();
+  const exists = meal.items.find(item => item.name === source.name);
+  if (!exists) meal.items.push({ ...source, amount: 1 });
+  myMenuState.selectedMealRowName = source.name;
+  renderMealContentTable();
+  syncMealButtons();
+}
+
+function removeSelectedMealItem() {
+  const meal = getSelectedMeal();
+  if (!meal || !myMenuState.selectedMealRowName) return;
+  pushMealHistory();
+  meal.items = meal.items.filter(item => item.name !== myMenuState.selectedMealRowName);
+  myMenuState.selectedMealRowName = '';
+  renderMealContentTable();
+  syncMealButtons();
+}
+
+function undoMealChange() {
+  if (myMenuState.undoStack.length === 0) return;
+  const current = JSON.stringify(myMenuState.mealsByType);
+  myMenuState.redoStack.push(current);
+  const prev = myMenuState.undoStack.pop();
+  myMenuState.mealsByType = JSON.parse(prev);
+  myMenuState.selectedMealRowName = '';
+  renderMyMenu();
+}
+
+function redoMealChange() {
+  if (myMenuState.redoStack.length === 0) return;
+  const current = JSON.stringify(myMenuState.mealsByType);
+  myMenuState.undoStack.push(current);
+  const next = myMenuState.redoStack.pop();
+  myMenuState.mealsByType = JSON.parse(next);
+  myMenuState.selectedMealRowName = '';
+  renderMyMenu();
 }
 
 function initGoogleTokenClient() {
