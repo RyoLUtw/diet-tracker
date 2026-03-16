@@ -1270,16 +1270,15 @@ function logoutGoogle() {
   if (googleAccessToken && window.google && google.accounts && google.accounts.oauth2) {
     google.accounts.oauth2.revoke(googleAccessToken, () => {});
   }
-  googleAccessToken = null;
-  localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
-  updateGoogleUiState(false, '尚未登入 Google');
+  clearGoogleAuthCache({ updateUi: true });
   console.log('[GoogleAuth] sign-out success');
 }
 
-function clearGoogleAuthCache() {
+function clearGoogleAuthCache(options = {}) {
+  const { updateUi = false } = options;
   googleAccessToken = null;
   localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
-  updateGoogleUiState(false, '尚未登入 Google');
+  if (updateUi) updateGoogleUiState(false, '尚未登入 Google');
 }
 
 function toggleStaySignedIn(checked) {
@@ -1312,9 +1311,9 @@ async function getAppDataFileId() {
 
 async function backupToGoogleDrive(options = {}) {
   const { silent = false, reason = 'manual' } = options;
-  let retryCount = 0;
+  let retriedInteractiveAuth = false;
   try {
-    while (retryCount < 2) {
+    while (true) {
       try {
         await ensureGoogleAccessToken(!silent);
         const fileId = await getAppDataFileId();
@@ -1336,21 +1335,23 @@ async function backupToGoogleDrive(options = {}) {
           body
         });
         if (!res.ok) {
-          if ((res.status === 401 || res.status === 403) && retryCount === 0) {
+          if ((res.status === 401 || res.status === 403) && !silent && !retriedInteractiveAuth) {
             clearGoogleAuthCache();
-            retryCount += 1;
+            retriedInteractiveAuth = true;
             continue;
           }
           throw new Error(`HTTP ${res.status}`);
         }
+
         setLastBackupTime(Date.now());
         console.log('[GoogleDrive] backup success', { reason });
         if (!silent) alert('已備份到 Google Drive appDataFolder');
         return true;
       } catch (err) {
-        if (err.message && (err.message.includes('HTTP 401') || err.message.includes('HTTP 403')) && retryCount === 0) {
+        const isAuthHttpError = err.message && (err.message.includes('HTTP 401') || err.message.includes('HTTP 403'));
+        if (isAuthHttpError && !silent && !retriedInteractiveAuth) {
           clearGoogleAuthCache();
-          retryCount += 1;
+          retriedInteractiveAuth = true;
           continue;
         }
         throw err;
