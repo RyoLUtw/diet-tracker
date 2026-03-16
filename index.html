@@ -47,6 +47,14 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .meal-add-btn { width: 100%; margin-bottom: 8px; border: 1px dashed #888; background: #fff; border-radius: 8px; padding: 6px 8px; cursor: pointer; }
 .meal-item-btn { display: block; width: 100%; text-align: left; border: 1px solid #ddd; background: #fff; border-radius: 8px; padding: 6px 8px; margin-bottom: 6px; cursor: pointer; }
 .meal-item-btn.active { border-color: #333; background: #f0f0f0; }
+.meal-item-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.meal-item-row .meal-item-btn { margin-bottom: 0; flex: 1; }
+.icon-btn { border: 1px solid #bbb; background: #fff; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; font-size: 16px; }
+.menu-option-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 8px; }
+.menu-option-meta { color: #666; font-size: 12px; }
+.menu-manage-grid { display: flex; flex-direction: column; gap: 10px; }
+.menu-manage-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.menu-manage-grid input,.menu-manage-grid select { border: 1px solid #bbb; border-radius: 8px; padding: 8px; font-size: 14px; }
 .undo-redo-row { display: flex; gap: 10px; }
 .date-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
 .date-label { min-width: 160px; text-align: center; font-weight: bold; }
@@ -318,6 +326,41 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   </div>
 </div>
 
+<div id="menuManageModal" class="modal-overlay">
+  <div class="modal" style="width:min(420px,calc(100% - 20px));">
+    <div class="modal-banner">
+      <button class="modal-action" onclick="closeMenuManageModal()">取消</button>
+      <div class="modal-title">管理菜單</div>
+      <button class="modal-action" onclick="saveMenuMetadata()">儲存</button>
+    </div>
+    <div class="modal-body" style="display:block;">
+      <div class="menu-manage-grid">
+        <label>菜單名稱
+          <input id="menuManageName" type="text" placeholder="請輸入菜單名稱">
+        </label>
+        <label>餐別
+          <select id="menuManageType"></select>
+        </label>
+        <div class="action-row">
+          <button class="action-btn" onclick="duplicateMenuFromModal()">複製菜單</button>
+          <button class="action-btn" onclick="deleteMenuFromModal()">刪除菜單</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="menuPickerModal" class="modal-overlay">
+  <div class="modal" style="width:min(460px,calc(100% - 20px));">
+    <div class="modal-banner">
+      <button class="modal-action" onclick="closeMenuPickerModal()">取消</button>
+      <div class="modal-title">選擇我的菜單</div>
+      <div></div>
+    </div>
+    <div id="menuPickerBody" class="modal-body" style="display:block;"></div>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'dietTrackerDailyDataV1';
 const STAY_SIGNED_IN_KEY = 'dietTrackerStaySignedIn';
@@ -356,7 +399,8 @@ const nameSorterZh = new Intl.Collator('zh-Hant-TW', { sensitivity: 'base' });
 let storageState = { version: 1, days: {} };
 let googleTokenClient = null;
 let googleAccessToken = null;
-
+let menuManageTarget = null;
+let menuPickerTargetList = null;
 
 let myMenuState = {
   selectedCategory: '',
@@ -524,17 +568,27 @@ function createSectionCard(title, className, sectionKey) {
   titleEl.className = 'section-title';
   titleEl.innerText = title;
 
+  const actionWrap = document.createElement('div');
+  actionWrap.className = 'action-row';
+
   const btn = document.createElement('button');
   btn.className = 'select-btn';
   btn.innerText = '選擇可食項目';
+
+  const myMenuBtn = document.createElement('button');
+  myMenuBtn.className = 'select-btn';
+  myMenuBtn.innerText = '選擇我的菜單';
 
   const list = document.createElement('div');
   list.className = 'items-list';
   list.dataset.sectionKey = sectionKey;
   btn.onclick = () => openSelectionModal(list);
+  myMenuBtn.onclick = () => openMenuPickerModal(list);
 
+  actionWrap.appendChild(btn);
+  actionWrap.appendChild(myMenuBtn);
   header.appendChild(titleEl);
-  header.appendChild(btn);
+  header.appendChild(actionWrap);
   card.appendChild(header);
   card.appendChild(list);
   return card;
@@ -674,6 +728,61 @@ function closeModal() {
   document.getElementById('selectionModal').classList.remove('open');
   closeSortModal();
   selectedInModal = [];
+}
+
+function getMealTypeFromSectionKey(sectionKey = '') {
+  if (sectionKey === 'breakfast') return '早餐';
+  if (sectionKey === 'lunch') return '午餐';
+  if (sectionKey === 'dinner') return '晚餐';
+  return '點心';
+}
+
+function openMenuPickerModal(targetList) {
+  menuPickerTargetList = targetList;
+  const type = getMealTypeFromSectionKey(targetList?.dataset?.sectionKey || '');
+  const body = document.getElementById('menuPickerBody');
+  if (!body) return;
+  body.innerHTML = '';
+  const meals = [...(myMenuState.mealsByType[type] || [])].sort((a, b) => compareByName({ name: a.name }, { name: b.name }));
+  if (!meals.length) {
+    const empty = document.createElement('div');
+    empty.className = 'management-note';
+    empty.innerText = `目前沒有${type}菜單`;
+    body.appendChild(empty);
+  }
+  meals.forEach(meal => {
+    const row = document.createElement('div');
+    row.className = 'menu-option-row';
+    const left = document.createElement('div');
+    const title = document.createElement('div');
+    title.innerText = meal.name;
+    const meta = document.createElement('div');
+    meta.className = 'menu-option-meta';
+    meta.innerText = `${type}・${meal.items.length} 項`;
+    left.appendChild(title);
+    left.appendChild(meta);
+    const useBtn = document.createElement('button');
+    useBtn.className = 'action-btn';
+    useBtn.innerText = '套用';
+    useBtn.onclick = () => applyMenuToDailyTarget(meal);
+    row.appendChild(left);
+    row.appendChild(useBtn);
+    body.appendChild(row);
+  });
+  document.getElementById('menuPickerModal').classList.add('open');
+}
+
+function closeMenuPickerModal() {
+  document.getElementById('menuPickerModal').classList.remove('open');
+  menuPickerTargetList = null;
+}
+
+function applyMenuToDailyTarget(meal) {
+  if (!menuPickerTargetList || !meal) return;
+  meal.items.forEach(item => addItemRow(menuPickerTargetList, item, Number(item.amount || 1)));
+  closeMenuPickerModal();
+  recalculateTotals();
+  saveCurrentDayData();
 }
 
 function confirmSelection() {
@@ -1050,6 +1159,8 @@ function renderCustomMealSelector() {
 
     const sortedMeals = [...(myMenuState.mealsByType[type] || [])].sort((a, b) => compareByName({ name: a.name }, { name: b.name }));
     sortedMeals.forEach(meal => {
+      const row = document.createElement('div');
+      row.className = 'meal-item-row';
       const btn = document.createElement('button');
       btn.className = `meal-item-btn ${meal.id === myMenuState.selectedMealId ? 'active' : ''}`;
       btn.innerText = meal.name;
@@ -1059,7 +1170,17 @@ function renderCustomMealSelector() {
         myMenuState.selectedMealRowName = '';
         renderMyMenu();
       };
-      content.appendChild(btn);
+      const editBtn = document.createElement('button');
+      editBtn.className = 'icon-btn';
+      editBtn.title = '編輯菜單';
+      editBtn.innerText = '✏️';
+      editBtn.onclick = (e) => {
+        e.stopPropagation();
+        openMenuManageModal(type, meal.id);
+      };
+      row.appendChild(btn);
+      row.appendChild(editBtn);
+      content.appendChild(row);
     });
 
     header.onclick = () => {
@@ -1078,13 +1199,96 @@ function renderCustomMealSelector() {
 
 function addMeal(type) {
   const name = prompt(`請輸入${type}菜單名稱`);
-  if (!name) return;
+  if (!name || !name.trim()) return;
   pushMealHistory();
   const id = `${safeMealKey(type)}-${Date.now()}`;
   myMenuState.mealsByType[type].push({ id, name: name.trim(), items: [] });
   myMenuState.selectedMealType = type;
   myMenuState.selectedMealId = id;
   myMenuState.selectedMealRowName = '';
+  renderMyMenu();
+}
+
+function openMenuManageModal(type, mealId) {
+  const meal = (myMenuState.mealsByType[type] || []).find(m => m.id === mealId);
+  if (!meal) return;
+  menuManageTarget = { type, id: mealId };
+  document.getElementById('menuManageName').value = meal.name;
+  const typeSelect = document.getElementById('menuManageType');
+  typeSelect.innerHTML = '';
+  mealTypes.forEach(mt => {
+    const option = document.createElement('option');
+    option.value = mt;
+    option.innerText = mt;
+    option.selected = mt === type;
+    typeSelect.appendChild(option);
+  });
+  document.getElementById('menuManageModal').classList.add('open');
+}
+
+function closeMenuManageModal() {
+  document.getElementById('menuManageModal').classList.remove('open');
+  menuManageTarget = null;
+}
+
+function saveMenuMetadata() {
+  if (!menuManageTarget) return;
+  const { type, id } = menuManageTarget;
+  const originList = myMenuState.mealsByType[type] || [];
+  const idx = originList.findIndex(m => m.id === id);
+  if (idx < 0) return closeMenuManageModal();
+  const nextName = (document.getElementById('menuManageName').value || '').trim();
+  if (!nextName) return alert('請輸入菜單名稱');
+  const nextType = document.getElementById('menuManageType').value || type;
+  pushMealHistory();
+  const meal = originList[idx];
+  meal.name = nextName;
+  if (nextType !== type) {
+    originList.splice(idx, 1);
+    myMenuState.mealsByType[nextType].push(meal);
+    myMenuState.selectedMealType = nextType;
+  } else {
+    myMenuState.selectedMealType = type;
+  }
+  myMenuState.selectedMealId = meal.id;
+  myMenuState.selectedMealRowName = '';
+  closeMenuManageModal();
+  renderMyMenu();
+}
+
+function duplicateMenuFromModal() {
+  if (!menuManageTarget) return;
+  const { type, id } = menuManageTarget;
+  const meal = (myMenuState.mealsByType[type] || []).find(m => m.id === id);
+  if (!meal) return;
+  pushMealHistory();
+  const dupId = `${safeMealKey(type)}-${Date.now()}`;
+  const copied = { ...meal, id: dupId, name: `${meal.name}（複製）`, items: meal.items.map(item => ({ ...item })) };
+  myMenuState.mealsByType[type].push(copied);
+  myMenuState.selectedMealType = type;
+  myMenuState.selectedMealId = dupId;
+  myMenuState.selectedMealRowName = '';
+  closeMenuManageModal();
+  renderMyMenu();
+}
+
+function deleteMenuFromModal() {
+  if (!menuManageTarget) return;
+  const { type, id } = menuManageTarget;
+  const list = myMenuState.mealsByType[type] || [];
+  const meal = list.find(m => m.id === id);
+  if (!meal) return;
+  if (!confirm(`確定刪除「${meal.name}」嗎？`)) return;
+  pushMealHistory();
+  myMenuState.mealsByType[type] = list.filter(m => m.id !== id);
+  if (myMenuState.mealsByType[type].length === 0) {
+    const fallbackId = `${safeMealKey(type)}-${Date.now()}`;
+    myMenuState.mealsByType[type].push({ id: fallbackId, name: `${type}菜單1`, items: [] });
+  }
+  myMenuState.selectedMealType = type;
+  myMenuState.selectedMealId = myMenuState.mealsByType[type][0].id;
+  myMenuState.selectedMealRowName = '';
+  closeMenuManageModal();
   renderMyMenu();
 }
 
