@@ -1304,7 +1304,10 @@ async function getAppDataFileId() {
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
     headers: { Authorization: `Bearer ${googleAccessToken}` }
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+  }
   const data = await res.json();
   return data.files && data.files[0] ? data.files[0].id : null;
 }
@@ -1317,7 +1320,9 @@ async function backupToGoogleDrive(options = {}) {
       try {
         await ensureGoogleAccessToken(!silent);
         const fileId = await getAppDataFileId();
-        const metadata = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
+        const metadata = fileId
+          ? { name: GDRIVE_FILE_NAME }
+          : { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
         const boundary = 'foo_bar_baz';
         const body =
           `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
@@ -1340,7 +1345,8 @@ async function backupToGoogleDrive(options = {}) {
             retriedInteractiveAuth = true;
             continue;
           }
-          throw new Error(`HTTP ${res.status}`);
+          const detail = await res.text();
+          throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
         }
 
         setLastBackupTime(Date.now());
@@ -1373,7 +1379,10 @@ async function restoreFromGoogleDrive() {
     const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
       headers: { Authorization: `Bearer ${googleAccessToken}` }
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+  }
     const data = await res.json();
     if (!data.days) throw new Error('備份格式錯誤');
     storageState = data;
