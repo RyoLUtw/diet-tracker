@@ -1499,11 +1499,12 @@ function restoreStaySignedInPreference() {
   }
 }
 
-async function getAppDataFileId() {
+async function listAppDataFiles() {
   const params = new URLSearchParams({
-    q: `name='${GDRIVE_FILE_NAME}' and trashed=false`,
+    q: `name='${GDRIVE_FILE_NAME}' and 'appDataFolder' in parents and trashed=false`,
     spaces: 'appDataFolder',
-    fields: 'files(id,name)'
+    orderBy: 'modifiedTime desc',
+    fields: 'files(id,name,size,modifiedTime)'
   });
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
     headers: { Authorization: `Bearer ${googleAccessToken}` }
@@ -1513,7 +1514,12 @@ async function getAppDataFileId() {
     throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
   }
   const data = await res.json();
-  return data.files && data.files[0] ? data.files[0].id : null;
+  return Array.isArray(data.files) ? data.files : [];
+}
+
+async function getAppDataFileId() {
+  const files = await listAppDataFiles();
+  return files[0] ? files[0].id : null;
 }
 
 async function backupToGoogleDrive(options = {}) {
@@ -1578,16 +1584,29 @@ async function backupToGoogleDrive(options = {}) {
 async function restoreFromGoogleDrive() {
   try {
     await ensureGoogleAccessToken(true);
-    const fileId = await getAppDataFileId();
-    if (!fileId) return alert('找不到雲端備份');
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-      headers: { Authorization: `Bearer ${googleAccessToken}` }
-    });
-    if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
-  }
-    const data = await res.json();
+    const files = await listAppDataFiles();
+    if (files.length === 0) return alert('找不到雲端備份');
+
+    let data = null;
+    let lastError = null;
+    for (const file of files) {
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`, {
+        headers: { Authorization: `Bearer ${googleAccessToken}` }
+      });
+      if (!res.ok) {
+        const detail = await res.text();
+        lastError = new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+        continue;
+      }
+      const candidate = await res.json();
+      if (candidate && typeof candidate === 'object' && candidate.days) {
+        data = candidate;
+        break;
+      }
+    }
+    if (!data) {
+      throw lastError || new Error('備份格式錯誤');
+    }
     if (!data.days) throw new Error('備份格式錯誤');
     storageState = data;
     persistState();
