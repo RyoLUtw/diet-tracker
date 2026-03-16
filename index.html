@@ -1276,6 +1276,12 @@ function logoutGoogle() {
   console.log('[GoogleAuth] sign-out success');
 }
 
+function clearGoogleAuthCache() {
+  googleAccessToken = null;
+  localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
+  updateGoogleUiState(false, '尚未登入 Google');
+}
+
 function toggleStaySignedIn(checked) {
   localStorage.setItem(STAY_SIGNED_IN_KEY, checked ? '1' : '0');
   if (!checked) localStorage.removeItem(GOOGLE_TOKEN_CACHE_KEY);
@@ -1299,37 +1305,57 @@ async function getAppDataFileId() {
   const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
     headers: { Authorization: `Bearer ${googleAccessToken}` }
   });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   return data.files && data.files[0] ? data.files[0].id : null;
 }
 
 async function backupToGoogleDrive(options = {}) {
   const { silent = false, reason = 'manual' } = options;
+  let retryCount = 0;
   try {
-    await ensureGoogleAccessToken(!silent);
-    const fileId = await getAppDataFileId();
-    const metadata = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
-    const boundary = 'foo_bar_baz';
-    const body =
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
-      `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(storageState)}\r\n` +
-      `--${boundary}--`;
+    while (retryCount < 2) {
+      try {
+        await ensureGoogleAccessToken(!silent);
+        const fileId = await getAppDataFileId();
+        const metadata = { name: GDRIVE_FILE_NAME, parents: ['appDataFolder'] };
+        const boundary = 'foo_bar_baz';
+        const body =
+          `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+          `--${boundary}\r\nContent-Type: application/json\r\n\r\n${JSON.stringify(storageState)}\r\n` +
+          `--${boundary}--`;
 
-    const method = fileId ? 'PATCH' : 'POST';
-    const url = fileId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
-      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+        const method = fileId ? 'PATCH' : 'POST';
+        const url = fileId
+          ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+          : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
 
-    const res = await fetch(url, {
-      method,
-      headers: { Authorization: `Bearer ${googleAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
-      body
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    setLastBackupTime(Date.now());
-    console.log('[GoogleDrive] backup success', { reason });
-    if (!silent) alert('已備份到 Google Drive appDataFolder');
-    return true;
+        const res = await fetch(url, {
+          method,
+          headers: { Authorization: `Bearer ${googleAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+          body
+        });
+        if (!res.ok) {
+          if ((res.status === 401 || res.status === 403) && retryCount === 0) {
+            clearGoogleAuthCache();
+            retryCount += 1;
+            continue;
+          }
+          throw new Error(`HTTP ${res.status}`);
+        }
+        setLastBackupTime(Date.now());
+        console.log('[GoogleDrive] backup success', { reason });
+        if (!silent) alert('已備份到 Google Drive appDataFolder');
+        return true;
+      } catch (err) {
+        if (err.message && (err.message.includes('HTTP 401') || err.message.includes('HTTP 403')) && retryCount === 0) {
+          clearGoogleAuthCache();
+          retryCount += 1;
+          continue;
+        }
+        throw err;
+      }
+    }
   } catch (err) {
     console.log('[GoogleDrive] backup failed', { reason, err });
     if (!silent) alert(`備份失敗: ${err.message}`);
