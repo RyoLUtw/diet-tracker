@@ -55,6 +55,12 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
 .menu-manage-grid { display: flex; flex-direction: column; gap: 10px; }
 .menu-manage-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
 .menu-manage-grid input,.menu-manage-grid select { border: 1px solid #bbb; border-radius: 8px; padding: 8px; font-size: 14px; }
+.drive-files-panel { display: flex; flex-direction: column; gap: 10px; }
+.drive-file-card { border: 1px solid #ddd; border-radius: 10px; padding: 10px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+.drive-file-title { font-weight: bold; word-break: break-all; }
+.drive-file-meta { font-size: 12px; color: #666; display: flex; flex-direction: column; gap: 2px; }
+.drive-file-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.drive-file-content { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; border: 1px solid #e3e3e3; border-radius: 8px; background: #fafafa; padding: 8px; max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
 .undo-redo-row { display: flex; gap: 10px; }
 .date-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 14px; }
 .date-label { min-width: 160px; text-align: center; font-weight: bold; }
@@ -209,6 +215,7 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
     <div class="management-row">
       <button class="tool-btn" onclick="backupToGoogleDrive()">備份到 Google Drive</button>
       <button class="tool-btn" onclick="restoreFromGoogleDrive()">從 Google Drive 還原</button>
+      <button class="tool-btn" onclick="openDriveDataManagerModal()">管理雲端備份檔</button>
     </div>
     <div class="management-row">
       <button class="tool-btn" onclick="exportJson()">匯出 JSON</button>
@@ -361,6 +368,20 @@ body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #fafaf
   </div>
 </div>
 
+<div id="driveDataManagerModal" class="modal-overlay">
+  <div class="modal" style="width:min(860px,calc(100% - 20px));">
+    <div class="modal-banner">
+      <button class="modal-action" onclick="closeDriveDataManagerModal()">關閉</button>
+      <div class="modal-title">Google Drive 備份檔管理</div>
+      <button class="modal-action" onclick="renderDriveDataManagerFiles()">重新整理</button>
+    </div>
+    <div class="modal-body" style="display:block;">
+      <div class="management-note" id="driveDataManagerStatus">載入中...</div>
+      <div id="driveDataManagerBody" class="drive-files-panel"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'dietTrackerDailyDataV1';
 const STAY_SIGNED_IN_KEY = 'dietTrackerStaySignedIn';
@@ -368,6 +389,7 @@ const GOOGLE_TOKEN_CACHE_KEY = 'dietTrackerGoogleTokenCache';
 const LAST_BACKUP_AT_KEY = 'dietTrackerLastBackupAt';
 const AUTO_BACKUP_INTERVAL_MS = 60 * 60 * 1000;
 const GDRIVE_FILE_NAME = 'diet-tracker-backup.json';
+const GDRIVE_FILE_NAME_PREFIX = 'diet-tracker-';
 const GOOGLE_CLIENT_ID = '332987792434-u7r3hdl46asbqo0si3ngqu46kdbgf2at.apps.googleusercontent.com';
 const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
 const nutrients = ['calories','totalFat','carbohydrates','saturatedFat','addedSugar','sodium','protein','solubleFiber','insolubleFiber','potassium','magnesium'];
@@ -1501,7 +1523,7 @@ function restoreStaySignedInPreference() {
 
 async function listAppDataFiles() {
   const params = new URLSearchParams({
-    q: `name='${GDRIVE_FILE_NAME}' and 'appDataFolder' in parents and trashed=false`,
+    q: `'appDataFolder' in parents and trashed=false`,
     spaces: 'appDataFolder',
     orderBy: 'modifiedTime desc',
     fields: 'files(id,name,size,modifiedTime)'
@@ -1514,7 +1536,11 @@ async function listAppDataFiles() {
     throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
   }
   const data = await res.json();
-  return Array.isArray(data.files) ? data.files : [];
+  const files = Array.isArray(data.files) ? data.files : [];
+  return files.filter(file => {
+    const name = (file?.name || '').trim();
+    return name.startsWith(GDRIVE_FILE_NAME_PREFIX) && name.endsWith('.json');
+  });
 }
 
 async function getAppDataFileId() {
@@ -1616,6 +1642,124 @@ async function restoreFromGoogleDrive() {
   } catch (err) {
     console.log('[GoogleDrive] load failed', err);
     alert(`還原失敗: ${err.message}`);
+  }
+}
+
+function closeDriveDataManagerModal() {
+  const modal = document.getElementById('driveDataManagerModal');
+  if (modal) modal.classList.remove('open');
+}
+
+async function openDriveDataManagerModal() {
+  document.getElementById('driveDataManagerModal').classList.add('open');
+  await renderDriveDataManagerFiles();
+}
+
+function formatDriveFileMeta(file) {
+  const modifiedTime = file?.modifiedTime ? new Date(file.modifiedTime).toLocaleString('zh-TW', { hour12: false }) : '未知時間';
+  const sizeText = Number(file?.size || 0).toLocaleString('zh-TW');
+  return {
+    modifiedTime,
+    sizeText
+  };
+}
+
+async function readDriveFileContent(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { Authorization: `Bearer ${googleAccessToken}` }
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+  }
+  return await res.text();
+}
+
+async function deleteDriveFile(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${googleAccessToken}` }
+  });
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`HTTP ${res.status}${detail ? `: ${detail}` : ''}`);
+  }
+}
+
+async function renderDriveDataManagerFiles() {
+  const statusEl = document.getElementById('driveDataManagerStatus');
+  const bodyEl = document.getElementById('driveDataManagerBody');
+  if (!statusEl || !bodyEl) return;
+  statusEl.innerText = '載入中...';
+  bodyEl.innerHTML = '';
+  try {
+    await ensureGoogleAccessToken(true);
+    const files = await listAppDataFiles();
+    statusEl.innerText = `共 ${files.length} 個備份檔（僅顯示 ${GDRIVE_FILE_NAME_PREFIX}*.json 命名規則）`;
+    if (files.length === 0) return;
+
+    files.forEach(file => {
+      const card = document.createElement('div');
+      card.className = 'drive-file-card';
+      const title = document.createElement('div');
+      title.className = 'drive-file-title';
+      title.innerText = file.name || '(未命名)';
+
+      const meta = document.createElement('div');
+      meta.className = 'drive-file-meta';
+      const { modifiedTime, sizeText } = formatDriveFileMeta(file);
+      meta.innerHTML = `<span>修改時間：${modifiedTime}</span><span>大小：${sizeText} bytes</span><span>檔案 ID：${file.id}</span>`;
+
+      const actionRow = document.createElement('div');
+      actionRow.className = 'drive-file-actions';
+      const readBtn = document.createElement('button');
+      readBtn.className = 'tool-btn';
+      readBtn.innerText = '讀取內容';
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'tool-btn warn';
+      deleteBtn.innerText = '刪除檔案';
+      const content = document.createElement('pre');
+      content.className = 'drive-file-content';
+      content.style.display = 'none';
+      content.innerText = '';
+
+      readBtn.onclick = async () => {
+        readBtn.disabled = true;
+        try {
+          const text = await readDriveFileContent(file.id);
+          content.innerText = text;
+          content.style.display = 'block';
+        } catch (err) {
+          alert(`讀取失敗: ${err.message}`);
+        } finally {
+          readBtn.disabled = false;
+        }
+      };
+
+      deleteBtn.onclick = async () => {
+        if (!confirm(`確定要刪除 ${file.name} 嗎？`)) return;
+        deleteBtn.disabled = true;
+        try {
+          await deleteDriveFile(file.id);
+          card.remove();
+          const leftCount = bodyEl.querySelectorAll('.drive-file-card').length;
+          statusEl.innerText = `共 ${leftCount} 個備份檔（僅顯示 ${GDRIVE_FILE_NAME_PREFIX}*.json 命名規則）`;
+        } catch (err) {
+          alert(`刪除失敗: ${err.message}`);
+          deleteBtn.disabled = false;
+        }
+      };
+
+      actionRow.appendChild(readBtn);
+      actionRow.appendChild(deleteBtn);
+      card.appendChild(title);
+      card.appendChild(meta);
+      card.appendChild(actionRow);
+      card.appendChild(content);
+      bodyEl.appendChild(card);
+    });
+  } catch (err) {
+    statusEl.innerText = `載入失敗: ${err.message}`;
   }
 }
 </script>
